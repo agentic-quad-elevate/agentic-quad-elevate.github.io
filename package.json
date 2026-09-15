@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "dev:anon": "VITE_ANONYMOUS=true vite",
-    "build": "vite build",
-    "build:public": "vite build",
+    "build": "npm run build:site",
+    "build:site": "rm -rf dist && VITE_ANONYMOUS=true vite build --outDir dist/review && vite build --outDir dist/public && node scripts/root-redirect.mjs review/",
     "build:anon": "VITE_ANONYMOUS=true vite build",
+    "build:public": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "predeploy": "npm run build:site",
     "deploy": "gh-pages -d dist -b gh-pages --nojekyll -u \"$(git config user.name) <$(git config user.email)>\""
   },
   "dependencies": {

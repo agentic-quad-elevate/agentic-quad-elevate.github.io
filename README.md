@@ -9,10 +9,20 @@ for Quadrupedal Manipulation*. Layout follows the Eureka-style research page tem
 npm install
 npm run dev          # public build (author names) at http://localhost:5173
 npm run dev:anon     # anonymous build (no names, links, or BibTeX)
-npm run build:public # -> dist/
-npm run build:anon   # -> dist/
-npm run deploy       # push dist/ to the gh-pages branch of this repo's origin
+npm run build:site   # -> dist/review (anonymous) + dist/public (named) + root redirect
+npm run deploy       # runs build:site, then pushes dist/ to the gh-pages branch
 ```
+
+Deployed layout on GitHub Pages:
+
+| URL | Content |
+|---|---|
+| `/` | redirects to `/review/` |
+| `/review/` | anonymous version |
+| `/public/` | version with authors, links, and BibTeX |
+
+`npm run build:anon` / `npm run build:public` still produce a single build in `dist/`
+for local checks.
 
 `identity.json` holds the real author data and is git-ignored so it never enters the public
 repo; copy `identity.example.json` to `identity.json` on a new machine before a public build.
@@ -60,8 +70,7 @@ git push -u origin main
 Publish (repeat after every change):
 
 ```sh
-npm run build:anon      # or build:public
-npm run deploy          # pushes dist/ to the gh-pages branch
+npm run deploy          # builds review/ and public/, then pushes dist/ to gh-pages
 ```
 
 Then in the GitHub repo: Settings > Pages > Build and deployment > Source
