@@ -1,0 +1,117 @@
+@font-face {
+  font-family: "Myriad-Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/MyriadPro-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Myriad-Pro-Bold";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/MyriadPro-Bold.woff") format("woff");
+}
+
+:root {
+  color: #4a4a4a;
+  background: #fff;
+  font-family: "Myriad-Pro", "Open Sans", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Chart series (validated categorical palette): ELEVATE, ASPIRE, Code-as-Policy. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  /* Capability acquisition highlight. */
+  --accent: #4a3aa7;
+  --accent-soft: rgba(74, 58, 167, 0.1);
+  --select-bg: rgba(15, 23, 42, 0.055);
+  --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+main {
+  min-height: 100vh;
+}
+
+.section {
+  padding: 54px 24px;
+}
+
+.container {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.is-max-desktop {
+  max-width: 960px;
+}
+
+.is-max-widescreen {
+  max-width: 1180px;
+}
+
+.has-text-centered {
+  text-align: center;
+}
+
+.has-text-justified {
+  text-align: justify;
+}
+
+.title {
+  color: #363636;
+  font-family: "Myriad-Pro", "Open Sans", Arial, sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.125;
+  margin: 0 0 1.5rem;
+  text-align: center;
+}
+
+.content {
+  font-size: 1.18rem;
+  line-height: 1.7;
+}
+
+.content p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+@media (max-width: 760px) {
+  .section {
+    padding: 42px 18px;
+  }
+
+  .has-text-justified {
+    text-align: left;
+  }
+}

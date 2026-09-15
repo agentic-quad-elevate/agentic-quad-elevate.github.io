@@ -1,0 +1,13 @@
+{
+  "authors": [
+    { "name": "First Author", "affiliation": "1", "href": "#" },
+    { "name": "Second Author", "affiliation": "2", "href": "#" }
+  ],
+  "affiliations": [
+    { "mark": "1", "name": "First Institution" },
+    { "mark": "2", "name": "Second Institution" }
+  ],
+  "correspondingText": "Contact: author@example.edu",
+  "footer": "Page layout adapted from the Eureka project page template.",
+  "bibtex": "@inproceedings{key2026,\n  title     = {Paper Title},\n  author    = {First Author and Second Author},\n  booktitle = {Venue},\n  year      = {2026}\n}"
+}
