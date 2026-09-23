@@ -31,10 +31,79 @@ export const paper = {
 // Drop files with these names into public/videos/ and the slots fill in.
 // A missing file shows a "video coming soon" placeholder instead of a broken player.
 export const videos = {
-  overview: 'overview.mp4',
-  b02: 'real_b02_rack_retrieval.mp4',
-  b03: 'real_b03_rack_placement.mp4',
+  teaser: 'teaser.mp4',
+  overview: 'icra_video.mp4',
+  b02: 'B02_real_3x.mp4',
+  b03: 'B03_real_3x.mp4',
+  rackMaintenance: 'rack_maintain_10x.mp4',
+  wallCleaning: 'wall_clean_10x.mp4',
+  pegInsertion: 'peg_insert.mp4',
 }
+
+// Additional real-robot demonstrations, one row each, in "More Real-Robot Demonstrations".
+export const demos = [
+  {
+    id: 'rack-maintenance',
+    tag: 'Long-horizon task',
+    title: 'Rack maintenance',
+    video: videos.rackMaintenance,
+    videoLabel: 'Rack maintenance on the physical robot',
+    paragraphs: [
+      'The robot places a soda can into a cardboard box, then picks up a water bottle and places it on the rack.',
+      'The task program chains two pick-and-place subtasks with different objects and destinations, so the robot has to locate, grasp, carry, and release twice in a row. Finishing the whole sequence shows that the composed skills hold up over a long horizon.',
+    ],
+  },
+  {
+    id: 'wall-cleaning',
+    tag: 'Enlarged workspace',
+    title: 'Wall cleaning',
+    video: videos.wallCleaning,
+    videoLabel: 'Wall cleaning on the physical robot',
+    paragraphs: [
+      'The robot picks up a towel from the floor and uses it to wipe the wall.',
+      'The wiping targets lie above the reach of the floor-supported controller. The task program calls the learned wall_stand and wall_reach controllers to raise the body against the wall and track the towel along it, so the workspace gained for the rack tasks carries over to a new job.',
+    ],
+  },
+  {
+    id: 'peg-insertion',
+    tag: 'Insertion precision',
+    title: 'Peg insertion',
+    video: videos.pegInsertion,
+    videoLabel: 'Peg insertion on the physical robot',
+    paragraphs: [
+      'The robot is commanded to insert a peg into a hole on the wall.',
+      'The hole is only slightly wider than the peg, so the approach is closed under visual servoing: the wrist camera keeps re-estimating the hole position and the end effector is corrected until the peg is aligned. The demonstration shows the insertion precision the system reaches with this feedback in the loop.',
+    ],
+  },
+]
+
+// Real-robot experiments shown one at a time in the "Real Experiments" section.
+export const realExperiments = [
+  {
+    id: 'b02',
+    code: 'B02',
+    title: 'Rack retrieval',
+    score: '18/20',
+    video: videos.b02,
+    videoLabel: 'B02 rack retrieval on the physical robot',
+    storyboard: 'real_b02_storyboard.png',
+    storyboardAlt: 'B02 storyboard with active skills and controllers',
+    caption:
+      'Retrieve a bottle from the 1.2 m rack and return to a four-foot stance while keeping hold of it. Bands show the active skill and controller. The two failures come from limited gripper contact that lets the bottle slip during floor recovery.',
+  },
+  {
+    id: 'b03',
+    code: 'B03',
+    title: 'Floor-to-rack placement',
+    score: '16/20',
+    video: videos.b03,
+    videoLabel: 'B03 floor-to-rack placement on the physical robot',
+    storyboard: 'real_b03_storyboard.png',
+    storyboardAlt: 'B03 storyboard with active skills and controllers',
+    caption:
+      'Pick a bottle up from the floor and place it upright on the rack. Failures mainly arise from unintended gripper contact during floor pickup.',
+  },
+]
 
 export const methods = [
   { id: 'elevate', label: 'ELEVATE (Ours)', short: 'ELEVATE', colorVar: '--series-1' },
