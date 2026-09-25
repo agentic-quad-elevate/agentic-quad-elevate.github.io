@@ -15,7 +15,7 @@ export const videoBase = `${base}videos`
 
 export const paper = {
   method: 'ELEVATE',
-  title: 'ELEVATE: Agentic Learning of Missing Capabilities for Quadrupedal Manipulation',
+  title: 'ELEVATE: Agentic Controller Acquisition from Task Failure for Quadrupedal Manipulation',
   // `publicOnly` links are hidden in the anonymous build.
   links: [
     { label: 'arXiv', href: '#', iconClass: 'ai ai-arxiv', publicOnly: true },
@@ -55,8 +55,7 @@ export const demos = [
     video: videos.rackMaintenance,
     videoLabel: 'Rack maintenance on the physical robot',
     paragraphs: [
-      'The robot places a soda can into a cardboard box, then picks up a water bottle and places it on the rack.',
-      'The task program chains two pick-and-place subtasks with different objects and destinations, so the robot has to locate, grasp, carry, and release twice in a row. Finishing the whole sequence shows that the composed skills hold up over a long horizon.',
+      'The robot is asked to place the soda can into the cardboard box and the water bottles on the rack, moving objects back and forth between the rack and the ground. Completing the whole sequence demonstrates that the learned controllers and skills can be composed to solve a long-horizon task.',
     ],
   },
   {
@@ -66,8 +65,7 @@ export const demos = [
     video: videos.wallCleaning,
     videoLabel: 'Wall cleaning on the physical robot',
     paragraphs: [
-      'The robot picks up a towel from the floor and uses it to wipe the wall.',
-      'The wiping targets lie above the reach of the floor-supported controller. The task program calls the learned wall_stand and wall_reach controllers to raise the body against the wall and track the towel along it, so the workspace gained for the rack tasks carries over to a new job.',
+      'The robot picks up a towel from the floor and uses it to wipe the wall. The task program calls all three high-level skills: floor_pickup to grab the towel, wall_high_reach to wipe targets above the reach of the floor-supported controller, and floor_recover to return to the floor. This demo shows the workspace enlarged by the learned skills and controllers.',
     ],
   },
   {
@@ -77,13 +75,12 @@ export const demos = [
     video: videos.pegInsertion,
     videoLabel: 'Peg insertion on the physical robot',
     paragraphs: [
-      'The robot is commanded to insert a peg into a hole on the wall.',
-      'The hole is only slightly wider than the peg, so the approach is closed under visual servoing: the wrist camera keeps re-estimating the hole position and the end effector is corrected until the peg is aligned. The demonstration shows the insertion precision the system reaches with this feedback in the loop.',
+      'The robot is commanded to insert a peg into a hole on the wall. The hole position is estimated from AprilTags, and the approach is closed under visual servoing: the wrist camera keeps re-estimating the hole position and corrects the end effector until the peg is aligned. The demonstration shows the insertion precision the system reaches with this feedback in the loop.',
     ],
   },
 ]
 
-// Real-robot experiments shown one at a time in the "Real Experiments" section.
+// Real-robot experiments shown one at a time in the "Zero-Shot Transfer to the Physical Robot" section.
 export const realExperiments = [
   {
     id: 'b02',
@@ -179,6 +176,48 @@ export const skills = [
 ]
 
 export const capabilities = [...controllers, ...skills]
+
+// "Different Environments, Different Strategies": the same A02 task solved in
+// the default environment (wall support) and with a box added (box support).
+// Each variant lists the controllers the agent trained in that run.
+export const strategies = {
+  intro:
+    'ELEVATE does not learn one fixed way to solve a task. Given the same A02 objective, reach a target 1.25 m above the floor, the agent diagnoses the missing capability from its failures and trains whatever the environment affords. Both runs below start from the same pretrained loco-manipulation controller and the same task-program loop.',
+  variants: [
+    {
+      id: 'wall',
+      title: 'Default environment',
+      tag: 'Wall support',
+      video: simTask('A02.mp4'),
+      videoLabel: 'A02 solved with wall support',
+      caption:
+        'The only support in the default environment is the wall. The agent trains wall_stand to raise the body with the front feet on the wall and wall_reach to track targets from that stance, then composes them into the wall_high_reach skill.',
+      controllers: [
+        { id: 'wall_stand', video: simController('wall_stand'), loop: [0, 2] },
+        { id: 'wall_reach', video: simController('wall_reach') },
+      ],
+    },
+    {
+      id: 'box',
+      title: 'Box environment',
+      tag: 'Box support',
+      video: simTask('A02_box.mp4'),
+      videoLabel: 'A02 solved with box support',
+      caption:
+        'With a box placed in the environment, the same failure-driven process instead learns box_stand to raise the body with the box as support and box_reach to manipulate from that stance, reaching the target without using the wall.',
+      controllers: [
+        { id: 'box_stand', video: simController('box_stand'), loop: [0, 2] },
+        { id: 'box_reach', video: simController('box_reach') },
+      ],
+    },
+  ],
+}
+
+// Every controller/skill name that prose should render as inline code.
+export const identifiers = [
+  ...capabilities.map((c) => c.id),
+  ...strategies.variants.flatMap((v) => v.controllers.map((c) => c.id)),
+]
 
 // usage: 'acquired' = diamond, 'used' = filled circle. Capabilities that exist
 // but are not listed are drawn as "retained" (gray line). Not-yet-existing

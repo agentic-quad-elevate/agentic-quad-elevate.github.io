@@ -1,6 +1,8 @@
 import './App.css'
 import { ANONYMOUS, demos, identity, imgBase, paper, videos } from './content.js'
+import Prose from './components/Prose.jsx'
 import RealExperiments from './components/RealExperiments.jsx'
+import StrategyComparison from './components/StrategyComparison.jsx'
 import TaskTimeline from './components/TaskTimeline.jsx'
 import VideoSlot from './components/VideoSlot.jsx'
 
@@ -117,8 +119,15 @@ function App() {
 
       <section className="section real-section">
         <div className="container is-max-widescreen">
-          <h2 className="title">Real Experiments</h2>
+          <h2 className="title">Zero-Shot Transfer to the Physical Robot</h2>
           <RealExperiments />
+        </div>
+      </section>
+
+      <section className="section strategies-section">
+        <div className="container is-max-widescreen">
+          <h2 className="title">Different Environments, Different Strategies</h2>
+          <StrategyComparison />
         </div>
       </section>
 
@@ -135,7 +144,9 @@ function App() {
                     <span className="demo-tag">{demo.tag}</span>
                   </h3>
                   {demo.paragraphs.map((text, index) => (
-                    <p key={index}>{text}</p>
+                    <p key={index}>
+                      <Prose text={text} />
+                    </p>
                   ))}
                 </div>
               </article>

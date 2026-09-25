@@ -8,6 +8,7 @@ import {
   tasks,
   trialsPerTask,
 } from '../content.js'
+import Prose from './Prose.jsx'
 import VideoSlot from './VideoSlot.jsx'
 
 // The timeline replays the task sequence: the grid starts with A01 alone and
@@ -51,23 +52,6 @@ const clipBadge = {
 }
 
 const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`
-
-// Controller and skill identifiers mentioned in prose are shown as inline code,
-// matching the Method Overview caption. Longest ids first so `wall_high_reach`
-// is not split by `wall_reach`.
-const identifierPattern = new RegExp(
-  `(${[...controllers, ...skills]
-    .map((c) => c.id)
-    .sort((a, b) => b.length - a.length)
-    .join('|')})`,
-  'g',
-)
-
-function Prose({ text }) {
-  return text
-    .split(identifierPattern)
-    .map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part))
-}
 
 function CapabilityRow({ capability, reached, onSelect }) {
   return (
