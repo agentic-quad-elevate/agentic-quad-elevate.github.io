@@ -33,7 +33,7 @@
   --accent-soft: rgba(74, 58, 167, 0.1);
   --acquired: #f97316; /* timeline: capability acquired on this task */
   --used: #16a34a; /* timeline: capability reused on this task */
-  --select-bg: rgba(37, 99, 235, 0.07); /* very light blue: the current task column */
+  --select-bg: rgba(37, 99, 235, 0.04); /* very light blue: the current task column */
   --mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
 }
 

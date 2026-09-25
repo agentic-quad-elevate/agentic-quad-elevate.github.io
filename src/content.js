@@ -29,10 +29,11 @@ export const paper = {
 }
 
 // Simulation rollouts used by the capability-growth timeline live under
-// public/videos/sim/: one ELEVATE clip per task and one clip per learned
-// controller. Paths below are relative to videos/.
+// public/videos/sim/: one ELEVATE clip per task, one per controller, and one
+// per skill. Paths below are relative to videos/.
 const simTask = (file) => `sim/tasks/ELEVATE/${file}`
 const simController = (id) => `sim/controllers/${id}.mp4`
+const simSkill = (id) => `sim/skills/${id}.mp4`
 
 // Drop files with these names into public/videos/ and the slots fill in.
 // A missing file shows a "video coming soon" placeholder instead of a broken player.
@@ -156,18 +157,23 @@ export const skills = [
   {
     id: 'floor_pickup',
     kind: 'skill',
+    video: simSkill('floor_pickup'),
     initial: true,
     summary: 'Locate an object from depth and segmentation, then pick it up from the floor.',
   },
   {
     id: 'wall_high_reach',
     kind: 'skill',
+    video: simSkill('wall_high_reach'),
+    loop: [5, null],
     acquiredAt: 'A02',
     summary: 'Approach the wall, raise the body with wall_stand, and reach the target with wall_reach.',
   },
   {
     id: 'floor_recover',
     kind: 'skill',
+    video: simSkill('floor_recover'),
+    loop: [11, 14],
     acquiredAt: 'A04',
     summary: 'Descend from the wall stance back to the floor while retaining a held object.',
   },

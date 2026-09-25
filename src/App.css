@@ -89,10 +89,7 @@ sup {
   min-width: 96px;
   padding: calc(0.5em - 1px) 1em;
   text-decoration: none;
-  transition:
-    background 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+  transition: background 160ms ease;
 }
 
 .button.is-dark {
@@ -102,8 +99,6 @@ sup {
 
 .button.is-dark:hover {
   background: #2f2f2f;
-  box-shadow: 0 8px 20px rgba(10, 10, 10, 0.18);
-  transform: translateY(-1px);
 }
 
 .button.is-rounded {
@@ -181,22 +176,20 @@ sup {
 
 .tl-play-button {
   align-items: center;
-  background: linear-gradient(180deg, #1f2937 0%, #0f172a 100%);
+  background: #0f172a;
   border: 0;
   border-radius: 999px;
-  box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.3);
   cursor: pointer;
   display: inline-flex;
   height: 32px;
   justify-content: center;
   padding: 0;
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  transition: background 200ms ease;
   width: 32px;
 }
 
 .tl-play-button:hover {
-  box-shadow: 0 6px 14px -3px rgba(15, 23, 42, 0.4);
-  transform: translateY(-1px);
+  background: #1f2937;
 }
 
 .tl-play-button:focus-visible,
@@ -269,7 +262,6 @@ sup {
   background: #fff;
   border: 3px solid #0f172a;
   border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
   height: 18px;
   margin-top: -6px;
   width: 18px;
@@ -291,7 +283,6 @@ sup {
   background: #fff;
   border: 3px solid #0f172a;
   border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
   height: 12px;
   width: 12px;
 }
@@ -517,7 +508,6 @@ sup {
 .tl-task img {
   aspect-ratio: 4 / 5;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
   display: block;
   max-width: 96px;
   object-fit: cover;
@@ -704,10 +694,9 @@ sup {
 .timeline-detail {
   align-items: start;
   animation: tl-fade 320ms ease;
-  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  background: #fff;
   border: 1px solid #e7e8ec;
   border-radius: 16px;
-  box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.2);
   display: grid;
   gap: 22px;
   grid-template-columns: minmax(320px, 440px) minmax(0, 1fr);
@@ -726,9 +715,6 @@ sup {
 
 .tl-detail-video {
   border-radius: 12px;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.08),
-    0 8px 20px -10px rgba(15, 23, 42, 0.3);
 }
 
 .tl-detail-media-label {
@@ -780,7 +766,6 @@ sup {
 
 .tl-clip-frame .tl-detail-clip {
   border-radius: 0;
-  box-shadow: none;
 }
 
 .tl-clip-badge {
@@ -981,9 +966,7 @@ sup {
 }
 
 .hero-video:focus-visible {
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.45),
-    0 12px 28px -8px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45);
 }
 
 /* ---------- Video ---------- */
@@ -995,10 +978,6 @@ sup {
 .video-slot {
   background: #000;
   border-radius: 14px;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.06),
-    0 2px 8px rgba(15, 23, 42, 0.08),
-    0 12px 28px -8px rgba(15, 23, 42, 0.18);
   display: block;
   height: auto;
   margin: 0 auto;
@@ -1009,7 +988,6 @@ sup {
   align-content: center;
   background: repeating-linear-gradient(135deg, #f7f8fa 0 14px, #eef0f3 14px 28px);
   border: 2px dashed #cbd5e1;
-  box-shadow: none;
   color: #475569;
   display: grid;
   gap: 4px;

@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import {
-  capabilities,
   capabilityState,
   controllers,
   imgBase,
@@ -139,6 +138,47 @@ function ObservationBand({ reached }) {
   )
 }
 
+// A row of clips for every capability of one kind that exists at this step,
+// each badged with its role on the current task (newly learned, used, or only
+// retained in the library).
+function LibraryRow({ title, items, reached, task }) {
+  const clips = items.filter((c) => c.video && capabilityState(c, reached) !== 'absent')
+  if (clips.length === 0) return null
+  const acquiredHere = clips.some((c) => task.usage[c.id] === 'acquired')
+  return (
+    <div className="tl-detail-clips">
+      <p className="tl-detail-label">
+        {title} after {task.id}
+        {acquiredHere ? <span className="tl-detail-badge">new</span> : null}
+      </p>
+      <ul>
+        {clips.map((capability) => {
+          const state = capabilityState(capability, reached)
+          return (
+            <li key={capability.id} className={`tl-clip is-${state}`}>
+              <div className="tl-clip-frame">
+                <VideoSlot
+                  file={capability.video}
+                  label={`${capability.id} ${capability.kind}, ${stateLabel[state]} on ${task.id}`}
+                  aspect="16 / 9"
+                  autoPlay
+                  hoverControls
+                  loopRange={capability.loop ?? null}
+                  className="tl-detail-clip"
+                />
+                <span className="tl-clip-badge" aria-hidden="true">
+                  {clipBadge[state]}
+                </span>
+              </div>
+              <code>{capability.id}</code>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export default function TaskTimeline() {
   const [reached, setReached] = useState(0)
   const [isAuto, setIsAuto] = useState(true)
@@ -183,12 +223,8 @@ export default function TaskTimeline() {
   }
 
   const task = tasks[reached]
-  const acquiredHere = capabilities.filter((capability) => task.usage[capability.id] === 'acquired')
   const liveControllers = controllers.filter((c) => capabilityState(c, reached) !== 'absent')
   const liveSkills = skills.filter((c) => capabilityState(c, reached) !== 'absent')
-  // Every controller in the library at this step gets a clip, badged with its
-  // role on the current task (newly learned, used, or only retained).
-  const libraryClips = liveControllers.filter((c) => c.video)
   const progress = (100 * reached) / LAST
 
   return (
@@ -376,40 +412,8 @@ export default function TaskTimeline() {
           })}
         </div>
 
-        {libraryClips.length > 0 ? (
-          <div className="tl-detail-clips">
-            <p className="tl-detail-label">
-              Controller library after {task.id}
-              {acquiredHere.some((c) => c.kind === 'controller') ? (
-                <span className="tl-detail-badge">new</span>
-              ) : null}
-            </p>
-            <ul>
-              {libraryClips.map((capability) => {
-                const state = capabilityState(capability, reached)
-                return (
-                  <li key={capability.id} className={`tl-clip is-${state}`}>
-                    <div className="tl-clip-frame">
-                      <VideoSlot
-                        file={capability.video}
-                        label={`${capability.id} controller, ${stateLabel[state]} on ${task.id}`}
-                        aspect="16 / 9"
-                        autoPlay
-                        hoverControls
-                        loopRange={capability.loop ?? null}
-                        className="tl-detail-clip"
-                      />
-                      <span className="tl-clip-badge" aria-hidden="true">
-                        {clipBadge[state]}
-                      </span>
-                    </div>
-                    <code>{capability.id}</code>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        ) : null}
+        <LibraryRow title="Controller library" items={controllers} reached={reached} task={task} />
+        <LibraryRow title="Skill library" items={skills} reached={reached} task={task} />
       </div>
     </figure>
   )
