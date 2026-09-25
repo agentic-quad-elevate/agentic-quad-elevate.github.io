@@ -262,7 +262,7 @@ export const tasks = [
     success: { elevate: 50, aspire: 50, cap: 50 },
     usage: { loco_manipulation: 'used', floor_pickup: 'used' },
     story:
-      'The predefined search and pickup skills combine with the initial loco-manipulation controller. All three methods reach 50/50 on bottles and soda cans.',
+      'The predefined floor_pickup skill combines with the initial loco-manipulation controller. All three methods reach 50/50 on bottles and soda cans.',
     note: 'No new controllers are trained in B01, B02, or B03.',
   },
   {
@@ -300,7 +300,7 @@ export const tasks = [
       wall_high_reach: 'used',
     },
     story:
-      'Floor pickup with the initial skill, then the elevated-reaching skill to transport and place the bottle on the rack. The acquired reaching capability transfers from targets to object placement.',
+      'floor_pickup lifts the bottle from the floor, then wall_high_reach transports and places it on the rack. The acquired reaching capability transfers from targets to object placement.',
     note: 'Also deployed zero-shot on the physical robot: 16/20 successes.',
   },
 ]

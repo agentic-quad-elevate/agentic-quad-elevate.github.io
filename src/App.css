@@ -145,7 +145,8 @@ sup {
   color: #363636;
 }
 
-.figure figcaption code {
+.figure figcaption code,
+.tl-detail-body code {
   background: #f1f5f9;
   border-radius: 4px;
   color: #1e293b;

@@ -52,6 +52,23 @@ const clipBadge = {
 
 const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`
 
+// Controller and skill identifiers mentioned in prose are shown as inline code,
+// matching the Method Overview caption. Longest ids first so `wall_high_reach`
+// is not split by `wall_reach`.
+const identifierPattern = new RegExp(
+  `(${[...controllers, ...skills]
+    .map((c) => c.id)
+    .sort((a, b) => b.length - a.length)
+    .join('|')})`,
+  'g',
+)
+
+function Prose({ text }) {
+  return text
+    .split(identifierPattern)
+    .map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part))
+}
+
 function CapabilityRow({ capability, reached, onSelect }) {
   return (
     <>
@@ -387,8 +404,14 @@ export default function TaskTimeline() {
             {task.id} · {task.family}
           </p>
           <h3 className="tl-detail-title">{task.objective}</h3>
-          <p className="tl-detail-story">{task.story}</p>
-          {task.note ? <p className="tl-detail-note">{task.note}</p> : null}
+          <p className="tl-detail-story">
+            <Prose text={task.story} />
+          </p>
+          {task.note ? (
+            <p className="tl-detail-note">
+              <Prose text={task.note} />
+            </p>
+          ) : null}
         </div>
 
         <div className="tl-detail-rates" aria-label={`Success rates on ${task.id}`}>
