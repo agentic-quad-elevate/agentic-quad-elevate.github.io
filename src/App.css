@@ -149,7 +149,10 @@ sup {
 .tl-detail-body code,
 .demo-text code,
 .strategies-intro code,
-.strategy-caption code {
+.strategy-caption code,
+.refine-intro code,
+.refine-changes code,
+.refine-outcome code {
   background: #f1f5f9;
   border-radius: 4px;
   color: #1e293b;
@@ -1107,6 +1110,160 @@ sup {
 }
 
 /* ---------- More demonstrations ---------- */
+/* ---------- Controller refinement stepper ---------- */
+.refine-intro {
+  color: #4a4a4a;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  margin: 0 auto 28px;
+  max-width: 960px;
+  text-align: left;
+}
+
+.refine-steps {
+  counter-reset: none;
+  display: grid;
+  gap: 44px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0 auto;
+  max-width: 960px;
+  padding: 0;
+}
+
+.refine-step {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+}
+
+.refine-kicker {
+  align-items: center;
+  color: #0f172a;
+  display: flex;
+  font-size: 1.05rem;
+  font-weight: 700;
+  gap: 8px;
+  margin: 0;
+}
+
+.refine-index {
+  align-items: center;
+  background: #0f172a;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex: none;
+  font-size: 0.8rem;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+
+/* Arrow in the gap between consecutive stages, centred on the clip. */
+.refine-media {
+  position: relative;
+}
+
+.refine-step + .refine-step .refine-media::before {
+  color: #94a3b8;
+  content: '\2192';
+  font-size: 1.6rem;
+  left: -22px;
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.refine-video {
+  border-radius: 10px;
+  margin: 0;
+}
+
+.refine-changes {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.refine-changes li {
+  align-items: baseline;
+  color: #4a4a4a;
+  display: grid;
+  font-size: 0.95rem;
+  gap: 8px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  line-height: 1.45;
+}
+
+.refine-sign {
+  font-family: var(--mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+.refine-changes .is-add .refine-sign {
+  color: #16a34a;
+}
+
+.refine-changes .is-remove .refine-sign {
+  color: #dc2626;
+}
+
+.refine-changes .is-tune .refine-sign {
+  color: #475569;
+}
+
+.refine-sr {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.refine-outcome {
+  border-left: 3px solid #cbd5e1;
+  color: #363636;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  margin: 4px 0 0;
+  padding-left: 10px;
+}
+
+.refine-outcome.is-fail {
+  border-color: #dc2626;
+}
+
+.refine-outcome.is-partial {
+  border-color: #f59e0b;
+}
+
+.refine-outcome.is-success {
+  border-color: #16a34a;
+}
+
+@media (max-width: 760px) {
+  .refine-steps {
+    gap: 36px;
+    grid-template-columns: 1fr;
+  }
+
+  .refine-step + .refine-step .refine-media::before {
+    content: '\2193';
+    left: 50%;
+    top: -18px;
+    transform: translate(-50%, -100%);
+  }
+}
+
 /* ---------- Strategy comparison ---------- */
 .strategies-intro {
   color: #4a4a4a;

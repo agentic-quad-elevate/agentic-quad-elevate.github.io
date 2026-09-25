@@ -213,6 +213,51 @@ export const strategies = {
   ],
 }
 
+// "How the Agent Refines a Controller": wall_stand after each round of the
+// agent's own reward revision. `changes` are the training changes the agent
+// made at that stage (kind: add / remove / tune); `outcome` is what the
+// resulting controller does.
+export const refinement = {
+  intro:
+    'When a task keeps failing, the agent does not just retry the program. It formulates a reinforcement-learning problem for the missing capability, watches how the trained controller behaves, and revises the rewards and training aids itself. wall_stand shows this loop: each stage below is the controller after one round of revision.',
+  stages: [
+    {
+      id: 'initial',
+      label: 'Initial formulation',
+      video: simController('wall_stand_initial'),
+      loop: [0, 2],
+      changes: [{ kind: 'add', text: 'Reward for reaching the target pose, from the reusable training template' }],
+      outcome: 'Fails to reach the desired position.',
+      outcomeKind: 'fail',
+    },
+    {
+      id: 'mid',
+      label: 'Reward revision',
+      video: simController('wall_stand_mid'),
+      loop: [0, 2],
+      changes: [
+        { kind: 'add', text: 'Reward for raising the body height' },
+        { kind: 'add', text: 'Reward for placing the front feet on the wall while the rear feet stay on the floor' },
+        { kind: 'add', text: 'Upward assist force on the body to help it rise during training' },
+      ],
+      outcome: 'Raises the body onto the wall, still helped by the assist force.',
+      outcomeKind: 'partial',
+    },
+    {
+      id: 'final',
+      label: 'Refinement',
+      video: simController('wall_stand'),
+      loop: [0, 2],
+      changes: [
+        { kind: 'tune', text: 'Reward terms rebalanced' },
+        { kind: 'remove', text: 'Assist force gradually removed' },
+      ],
+      outcome: 'A usable wall_stand controller that stands on the wall unaided.',
+      outcomeKind: 'success',
+    },
+  ],
+}
+
 // Every controller/skill name that prose should render as inline code.
 export const identifiers = [
   ...capabilities.map((c) => c.id),

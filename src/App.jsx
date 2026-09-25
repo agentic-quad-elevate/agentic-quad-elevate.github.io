@@ -2,6 +2,7 @@ import './App.css'
 import { ANONYMOUS, demos, identity, imgBase, paper, videos } from './content.js'
 import Prose from './components/Prose.jsx'
 import RealExperiments from './components/RealExperiments.jsx'
+import RefinementSteps from './components/RefinementSteps.jsx'
 import StrategyComparison from './components/StrategyComparison.jsx'
 import TaskTimeline from './components/TaskTimeline.jsx'
 import VideoSlot from './components/VideoSlot.jsx'
@@ -121,6 +122,13 @@ function App() {
         <div className="container is-max-widescreen">
           <h2 className="title">Zero-Shot Transfer to the Physical Robot</h2>
           <RealExperiments />
+        </div>
+      </section>
+
+      <section className="section refine-section">
+        <div className="container is-max-widescreen">
+          <h2 className="title">How the Agent Refines a Controller</h2>
+          <RefinementSteps />
         </div>
       </section>
 
