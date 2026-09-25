@@ -16,7 +16,6 @@ export const videoBase = `${base}videos`
 export const paper = {
   method: 'ELEVATE',
   title: 'ELEVATE: Agentic Learning of Missing Capabilities for Quadrupedal Manipulation',
-  venue: 'Submitted to ICRA 2027',
   // `publicOnly` links are hidden in the anonymous build.
   links: [
     { label: 'arXiv', href: '#', iconClass: 'ai ai-arxiv', publicOnly: true },

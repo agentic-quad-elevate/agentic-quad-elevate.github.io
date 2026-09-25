@@ -41,8 +41,6 @@ function Hero() {
           </>
         )}
 
-        <p className="venue">{paper.venue}</p>
-
         <div className="publication-links" aria-label="Paper resources">
           {visibleLinks.map((link) => (
             <a className="button is-dark is-rounded" href={link.href} key={link.label}>

@@ -3,14 +3,6 @@
   padding: 44px 24px 22px;
 }
 
-.venue {
-  color: #4a4a4a;
-  font-size: 1.25rem;
-  font-weight: 400;
-  line-height: 1.25;
-  margin: 0 0 16px;
-}
-
 .publication-title {
   color: #363636;
   font-family: "Myriad-Pro", "Open Sans", Arial, sans-serif;
@@ -73,6 +65,7 @@ sup {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  margin-top: 16px;
 }
 
 .button {
@@ -1221,8 +1214,7 @@ sup {
 
   .publication-authors,
   .publication-affiliations,
-  .corresponding-authors,
-  .venue {
+  .corresponding-authors {
     font-size: 1.18rem;
   }
 }
