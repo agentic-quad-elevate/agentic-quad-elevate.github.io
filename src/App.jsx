@@ -72,7 +72,7 @@ function App() {
       <section className="section">
         <div className="container is-max-desktop">
           <h2 className="title">Abstract</h2>
-          <div className="content has-text-justified">
+          <div className="content">
             <p>{paper.abstract}</p>
           </div>
         </div>
@@ -91,11 +91,14 @@ function App() {
           <figure className="figure method-figure">
             <img src={`${imgBase}/method.png`} alt="Overview of ELEVATE" />
             <figcaption>
-              The agent synthesizes, evaluates, and refines task programs using its capability library (left).
-              Persistent failures after refinement motivate controller learning (middle): the agent assesses
-              feasibility, formulates an RL problem, and revises training using behavior feedback. Validated
-              controllers support skill composition and renewed task solving. The right panels illustrate this
-              process for bottle placement.
+              <strong>Overview of ELEVATE.</strong> The agent synthesizes and refines task programs using its
+              capability library. Persistent failures after refinement (1) motivate controller learning (2): the
+              agent assesses feasibility, formulates an RL problem, and revises training using behavior feedback.
+              Validated controllers are added to the library and composed into high-level skills (3), enabling
+              renewed task execution and eventual completion (4). The right panels schematically illustrate bottle
+              placement: <code>wall_stand</code> elevates the body using wall support, while{' '}
+              <code>wall_reach</code> enables manipulation from that stance. The <code>wall_high_reach</code> skill
+              coordinates these controllers.
             </figcaption>
           </figure>
         </div>
