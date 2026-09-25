@@ -103,7 +103,7 @@ function App() {
 
       <section className="section experiments-section">
         <div className="container is-max-widescreen">
-          <h2 className="title">Experiments</h2>
+          <h2 className="title">Capability Growth Across Sequential Tasks</h2>
           <TaskTimeline />
           <p className="timeline-caption">
             <strong>Seven tasks, one growing library.</strong> The agent starts with a single pretrained
