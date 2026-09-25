@@ -31,8 +31,10 @@
   /* Capability acquisition highlight. */
   --accent: #4a3aa7;
   --accent-soft: rgba(74, 58, 167, 0.1);
-  --select-bg: rgba(15, 23, 42, 0.055);
-  --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  --acquired: #f97316; /* timeline: capability acquired on this task */
+  --used: #16a34a; /* timeline: capability reused on this task */
+  --select-bg: rgba(37, 99, 235, 0.07); /* very light blue: the current task column */
+  --mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
 }
 
 * {

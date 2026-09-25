@@ -109,7 +109,7 @@ function App() {
             <strong>Seven tasks, one growing library.</strong> The agent starts with a single pretrained
             loco-manipulation controller. When a task keeps failing, it diagnoses the missing capability, trains a
             new controller with reinforcement learning, wraps it in a Python skill, and keeps both for later tasks.
-            Click a task or step through the sequence.
+            Press play to watch the library grow task by task, or drag the slider to any point in the sequence.
           </p>
         </div>
       </section>

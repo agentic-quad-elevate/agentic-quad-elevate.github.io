@@ -28,6 +28,12 @@ export const paper = {
     'Quadrupedal manipulators can extend their workspace through whole-body interaction, but task-planning agents remain bounded by the capabilities of their available controllers. We present ELEVATE, a framework that connects persistent task-execution failures to the acquisition of new learned controllers. A coding agent first attempts to solve each task with its current capabilities. When execution feedback indicates a capability gap, the agent constructs a reinforcement-learning problem from a reusable training template, then trains and validates a new controller. Learned controllers and reusable Python skills are retained for subsequent tasks. Starting from a pretrained loco-manipulation controller, the agent acquires wall-elevated, wall-supported manipulation, and floor-recovery controllers across seven simulation tasks. ELEVATE achieves 97.1% success over 350 final evaluation trials, compared with 28.6% for ASPIRE using a fixed library of learned controllers. Without real-robot fine-tuning, the transferred controllers achieve 18/20 successes on rack retrieval and 16/20 on floor-to-rack placement with a physical quadrupedal manipulator.',
 }
 
+// Simulation rollouts used by the capability-growth timeline live under
+// public/videos/sim/: one ELEVATE clip per task and one clip per learned
+// controller. Paths below are relative to videos/.
+const simTask = (file) => `sim/tasks/ELEVATE/${file}`
+const simController = (id) => `sim/controllers/${id}.mp4`
+
 // Drop files with these names into public/videos/ and the slots fill in.
 // A missing file shows a "video coming soon" placeholder instead of a broken player.
 export const videos = {
@@ -117,24 +123,30 @@ export const controllers = [
   {
     id: 'loco_manipulation',
     kind: 'controller',
+    video: simController('loco_manipulation'),
     initial: true,
     summary: 'Pretrained loco-manipulation: base velocity, 6D end-effector pose, and gripper commands.',
   },
   {
     id: 'wall_stand',
     kind: 'controller',
+    video: simController('wall_stand'),
+    loop: [0, 2], // seconds: replay only the stand-up itself
     acquiredAt: 'A02',
     summary: 'Body reconfiguration: raise the arm mount by placing the front feet on the wall.',
   },
   {
     id: 'wall_reach',
     kind: 'controller',
+    video: simController('wall_reach'),
     acquiredAt: 'A02',
     summary: 'Supported manipulation: track end-effector targets from the wall-supported stance.',
   },
   {
     id: 'wall_descent',
     kind: 'controller',
+    video: simController('wall_descent'),
+    loop: [0, 2], // seconds: replay only the descent itself
     acquiredAt: 'A04',
     summary: 'Body reconfiguration: return from the wall stance to a four-foot stance.',
   },
@@ -142,7 +154,7 @@ export const controllers = [
 
 export const skills = [
   {
-    id: 'pickup_object',
+    id: 'floor_pickup',
     kind: 'skill',
     initial: true,
     summary: 'Locate an object from depth and segmentation, then pick it up from the floor.',
@@ -171,17 +183,21 @@ export const tasks = [
     id: 'A01',
     family: 'Reaching',
     short: 'Floor-level target',
+    video: simTask('A01.mp4'),
+    loop: [8, null], // seconds: replay from 8 s to the end of the clip
     objective: 'Reach a random floor-level target.',
     success: { elevate: 49, aspire: 50, cap: 43 },
     usage: { loco_manipulation: 'used' },
     story:
       'The pretrained loco-manipulation controller is enough. All three methods solve the task from the initial library.',
-    note: 'The single ELEVATE failure meets the position tolerance but has 0.242 rad orientation error.',
+    note: '',
   },
   {
     id: 'A02',
     family: 'Reaching',
     short: 'High wall target',
+    video: simTask('A02.mp4'),
+    loop: [9, null],
     objective: 'Reach a target 1.25 m above the floor, 0.30 m from the wall.',
     success: { elevate: 50, aspire: 0, cap: 0 },
     usage: {
@@ -198,6 +214,8 @@ export const tasks = [
     id: 'A03',
     family: 'Reaching',
     short: 'Three waypoints',
+    video: simTask('A03.mp4'),
+    loop: [3, null],
     objective: 'Reach three elevated waypoints in order.',
     success: { elevate: 48, aspire: 0, cap: 0 },
     usage: {
@@ -208,12 +226,14 @@ export const tasks = [
     },
     story:
       'The two controllers acquired on A02 are reused unchanged. The first task-program candidate passes both development sweeps by adapting wall_high_reach to visit three waypoints, with no further controller training or program repairs.',
-    note: 'The two failures stop at the program deadline before completing the second or third waypoint dwell.',
+    note: '',
   },
   {
     id: 'A04',
     family: 'Reaching',
     short: 'High, then low',
+    video: simTask('A04.mp4'),
+    loop: [9, null],
     objective: 'Reach targets at 1.25 m then 0.40 m in the same wall column.',
     success: { elevate: 46, aspire: 0, cap: 0 },
     usage: {
@@ -226,15 +246,16 @@ export const tasks = [
     },
     story:
       'Reaching the low target after the high one requires leaving the wall stance. The agent acquires a wall_descent controller and wraps it in a floor_recover skill, expanding the library to four controllers.',
-    note: 'The four failures are incomplete target dwells at the stage deadlines, two at the high target and two at the low target.',
+    note: '',
   },
   {
     id: 'B01',
     family: 'Manipulation',
     short: 'Floor pickup',
+    video: simTask('B01/run_002-third-person-camera-step-0.mp4'),
     objective: 'Lift a floor bottle or soda can at least 0.30 m above the floor.',
     success: { elevate: 50, aspire: 50, cap: 50 },
-    usage: { loco_manipulation: 'used', pickup_object: 'used' },
+    usage: { loco_manipulation: 'used', floor_pickup: 'used' },
     story:
       'The predefined search and pickup skills combine with the initial loco-manipulation controller. All three methods reach 50/50 on bottles and soda cans.',
     note: 'No new controllers are trained in B01, B02, or B03.',
@@ -243,6 +264,8 @@ export const tasks = [
     id: 'B02',
     family: 'Manipulation',
     short: 'Rack retrieval',
+    video: simTask('B02/B02-third-person-camera-step-0.mp4'),
+    loop: [5, null],
     objective: 'Retrieve a bottle from a 1.2 m-high rack; retain it with all four feet on the floor.',
     success: { elevate: 50, aspire: 0, cap: 0 },
     usage: {
@@ -250,7 +273,6 @@ export const tasks = [
       wall_stand: 'used',
       wall_reach: 'used',
       wall_descent: 'used',
-      pickup_object: 'used',
       wall_high_reach: 'used',
       floor_recover: 'used',
     },
@@ -262,18 +284,19 @@ export const tasks = [
     id: 'B03',
     family: 'Manipulation',
     short: 'Rack placement',
+    video: simTask('B03/B03-third-person-camera-step-0.mp4'),
     objective: 'Pick up a floor bottle and place it on the rack; the released bottle remains upright on the shelf.',
     success: { elevate: 47, aspire: 0, cap: 0 },
     usage: {
       loco_manipulation: 'used',
       wall_stand: 'used',
       wall_reach: 'used',
-      pickup_object: 'used',
+      floor_pickup: 'used',
       wall_high_reach: 'used',
     },
     story:
       'Floor pickup with the initial skill, then the elevated-reaching skill to transport and place the bottle on the rack. The acquired reaching capability transfers from targets to object placement.',
-    note: 'In the three failures, two bottles fall onto the rack and one falls to the ground during placement. Physical deployment: 16/20 successes.',
+    note: 'Also deployed zero-shot on the physical robot: 16/20 successes.',
   },
 ]
 

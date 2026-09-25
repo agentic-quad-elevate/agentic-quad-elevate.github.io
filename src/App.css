@@ -169,8 +169,11 @@ sup {
   margin: 0;
 }
 
+/* Items align to the top so the slider's tick labels (below its track) do not
+   push the track off the button's midline; the slider is nudged down so the
+   18px track centres on the 32px button. */
 .timeline-controls {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -197,7 +200,7 @@ sup {
 }
 
 .tl-play-button:focus-visible,
-.tl-step-button:focus-visible,
+.tl-tick:focus-visible,
 .tl-task:focus-visible,
 .tl-cell:focus-visible,
 .real-tab:focus-visible {
@@ -213,34 +216,131 @@ sup {
   margin-left: 2px;
 }
 
-.tl-stop-icon {
-  background: #fff;
+.tl-pause-icon {
+  border-left: 3px solid #fff;
+  border-right: 3px solid #fff;
   display: block;
   height: 11px;
-  width: 11px;
+  width: 9px;
 }
 
-.tl-step-button {
-  background: #fff;
-  border: 1px solid #e2e2e6;
-  border-radius: 999px;
-  color: #363636;
+.tl-sr-only {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* Slider: the fill shows how far the sequence has advanced; tick labels sit
+   under the stops the thumb snaps to (9px = half the thumb width). */
+.tl-slider {
+  flex: 1 1 280px;
+  margin-top: 7px;
+  min-width: 220px;
+  padding-bottom: 18px;
+  position: relative;
+}
+
+.tl-range {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
   cursor: pointer;
-  font-size: 1.3rem;
-  height: 32px;
-  line-height: 1;
-  padding: 0 0 2px;
-  width: 32px;
+  display: block;
+  height: 18px;
+  margin: 0;
+  width: 100%;
 }
 
-.tl-step-button:hover {
-  border-color: #94a3b8;
+.tl-range::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, #0f172a var(--tl-progress, 0%), #e2e8f0 var(--tl-progress, 0%));
+  border-radius: 999px;
+  height: 6px;
+}
+
+.tl-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff;
+  border: 3px solid #0f172a;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
+  height: 18px;
+  margin-top: -6px;
+  width: 18px;
+}
+
+.tl-range::-moz-range-track {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 6px;
+}
+
+.tl-range::-moz-range-progress {
+  background: #0f172a;
+  border-radius: 999px;
+  height: 6px;
+}
+
+.tl-range::-moz-range-thumb {
+  background: #fff;
+  border: 3px solid #0f172a;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
+  height: 12px;
+  width: 12px;
+}
+
+.tl-range:focus-visible {
+  border-radius: 999px;
+  outline: 2px solid hsl(121, 100%, 30%);
+  outline-offset: 4px;
+}
+
+.tl-ticks {
+  height: 16px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 20px;
+}
+
+.tl-tick {
+  background: none;
+  border: 0;
+  color: #94a3b8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  left: calc(9px + (100% - 18px) * var(--tl-stop, 0));
+  line-height: 1;
+  padding: 2px 3px;
+  position: absolute;
+  transform: translateX(-50%);
+  transition: color 200ms ease;
+}
+
+.tl-tick.is-reached {
+  color: #475569;
+}
+
+.tl-tick.is-current {
+  color: #0f172a;
 }
 
 .tl-position {
   color: #363636;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
 }
 
 .tl-legend {
@@ -249,8 +349,9 @@ sup {
   flex-wrap: wrap;
   font-size: 0.88rem;
   gap: 14px;
+  justify-content: flex-end;
   list-style: none;
-  margin: 0 0 0 auto;
+  margin: -6px 0 0;
   padding: 0;
 }
 
@@ -261,8 +362,8 @@ sup {
 }
 
 .tl-legend .tl-marker {
-  height: 14px;
-  width: 14px;
+  height: 18px;
+  width: 18px;
 }
 
 .tl-legend-line {
@@ -273,32 +374,76 @@ sup {
 }
 
 .timeline-scroll {
+  container-type: inline-size;
   overflow-x: auto;
 }
 
+/* Seven task tracks are always laid out; the grid's own width (set from
+   --tl-n, the number of tasks reached) clips the ones not reached yet and
+   animates as each new task is added. A column is one seventh of the
+   container, so the full sequence exactly fills it. */
 .timeline-grid {
+  --tl-col: max(108px, calc((100cqw - 182px) / 7));
   background: #fff;
   border: 1px solid #e7e8ec;
   border-radius: 16px;
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 180px repeat(7, minmax(108px, 1fr));
-  min-width: 960px;
+  grid-template-columns: 180px repeat(7, var(--tl-col));
   overflow: hidden;
+  transition: width 520ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: calc(182px + var(--tl-n, 7) * var(--tl-col));
+}
+
+@keyframes tl-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .tl-row-label {
   align-items: center;
+  animation: tl-appear 420ms ease both;
   border-bottom: 1px solid #f0f0f2;
   color: #363636;
   display: flex;
   font-size: 0.9rem;
+  grid-column: 1; /* start a new row even when the reached columns do not fill all seven tracks */
   min-height: 38px;
   padding: 0 14px;
 }
 
-.tl-row-label code {
-  color: #1f2937;
-  font-size: 0.86rem;
+/* Controller and skill identifiers read as code: coding font, inline-code chip. */
+.tl-row-label code,
+.tl-clip code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  color: #1e293b;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  padding: 2px 7px;
 }
 
 .tl-row-label.is-header {
@@ -325,18 +470,18 @@ sup {
 }
 
 .tl-obs {
-  align-items: center;
   background: #fafafa;
   border-bottom: 1px solid #f0f0f2;
   border-left: 1px solid #e7e8ec;
   color: #475569;
-  display: flex;
   font-size: 0.8rem;
   font-weight: 600;
-  justify-content: center;
-  min-height: 32px;
+  line-height: 32px;
+  overflow: hidden;
   padding: 0 10px;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tl-obs.is-visual {
@@ -349,6 +494,7 @@ sup {
 }
 
 .tl-task {
+  animation: tl-appear 420ms ease both;
   background: #fff;
   border: 0;
   border-bottom: 1px solid #f0f0f2;
@@ -409,12 +555,32 @@ sup {
   text-transform: uppercase;
 }
 
+.tl-band > span:first-child,
+.tl-band-count {
+  flex: none;
+  white-space: nowrap;
+}
+
+.tl-band-count {
+  animation: tl-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  letter-spacing: 0;
+  padding: 1px 9px;
+  text-transform: none;
+}
+
 .tl-band-note {
   color: #5f6f5f;
   font-size: 0.82rem;
   font-weight: 400;
   letter-spacing: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-transform: none;
+  white-space: nowrap;
 }
 
 .tl-band.is-skills {
@@ -437,6 +603,7 @@ sup {
 
 .tl-cell {
   align-items: center;
+  animation: tl-appear 420ms ease both;
   background: #fff;
   border: 0;
   border-bottom: 1px solid #f0f0f2;
@@ -477,18 +644,22 @@ sup {
 
 .tl-marker {
   flex: none;
-  height: 16px;
+  height: 22px;
   position: relative;
-  width: 16px;
+  width: 22px;
   z-index: 1;
 }
 
+.tl-cell .tl-marker {
+  animation: tl-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .tl-marker.is-acquired path {
-  fill: var(--accent);
+  fill: var(--acquired);
 }
 
 .tl-marker.is-used circle {
-  fill: #334155;
+  fill: var(--used);
 }
 
 .tl-cell.is-rate {
@@ -539,8 +710,110 @@ sup {
   box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.2);
   display: grid;
   gap: 22px;
-  grid-template-columns: 120px minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(320px, 440px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr; /* extra height from the tall media column goes below the rates strip */
   padding: 18px 20px;
+}
+
+/* The rollout clip takes the left column at full height; the text and the
+   success-rate strip stack in the right column. */
+.tl-detail-media {
+  align-content: start;
+  display: grid;
+  gap: 8px;
+  grid-row: 1 / span 2;
+}
+
+.tl-detail-video {
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.08),
+    0 8px 20px -10px rgba(15, 23, 42, 0.3);
+}
+
+.tl-detail-media-label {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+/* The controller library is a full row under the panel: four equal slots,
+   one per controller in the final library, filled in as they are learned. */
+.tl-detail-clips {
+  grid-column: 1 / -1;
+}
+
+.tl-detail-clips ul {
+  display: grid;
+  gap: 12px 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tl-clip {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+/* Each library clip carries a corner badge for its role on the current task
+   (learned here, reused, or only retained); retained clips are also faded. */
+.tl-clip-frame {
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  transition: opacity 200ms ease;
+  width: 100%;
+}
+
+.tl-clip.is-retained .tl-clip-frame {
+  opacity: 0.55;
+}
+
+.tl-clip.is-retained:hover .tl-clip-frame {
+  opacity: 1;
+}
+
+.tl-clip-frame .tl-detail-clip {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.tl-clip-badge {
+  background: var(--used);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.64rem;
+  font-weight: 700;
+  left: 7px;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  pointer-events: none;
+  position: absolute;
+  text-transform: uppercase;
+  top: 7px;
+}
+
+.tl-clip.is-acquired .tl-clip-badge {
+  background: var(--acquired);
+}
+
+.tl-clip.is-retained .tl-clip-badge {
+  background: rgba(255, 255, 255, 0.92);
+  color: #64748b;
+}
+
+.tl-clip code {
+  font-size: 0.78rem;
+}
+
+.tl-clip.is-retained code {
+  border-style: dashed;
+  color: #94a3b8;
 }
 
 @keyframes tl-fade {
@@ -553,7 +826,7 @@ sup {
 }
 
 .tl-detail-thumb {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 640 / 368;
   border-radius: 12px;
   object-fit: cover;
   width: 100%;
@@ -587,12 +860,6 @@ sup {
   margin: 0 0 12px;
 }
 
-.tl-detail-library {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr 1fr;
-}
-
 .tl-detail-label {
   align-items: center;
   color: #475569;
@@ -606,7 +873,7 @@ sup {
 }
 
 .tl-detail-badge {
-  background: var(--accent);
+  background: var(--acquired);
   border-radius: 999px;
   color: #fff;
   font-size: 0.66rem;
@@ -614,45 +881,12 @@ sup {
   padding: 1px 7px;
 }
 
-.tl-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.tl-chip {
-  align-items: center;
-  background: #fff;
-  border: 1px solid #e2e2e6;
-  border-radius: 999px;
-  display: inline-flex;
-  font-size: 0.82rem;
-  gap: 5px;
-  padding: 3px 9px;
-}
-
-.tl-chip .tl-marker {
-  height: 12px;
-  width: 12px;
-}
-
-.tl-chip.is-acquired {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.tl-chip.is-retained {
-  border-style: dashed;
-  color: #94a3b8;
-}
-
 .tl-detail-rates {
   align-content: start;
   display: grid;
-  gap: 10px;
+  gap: 14px;
+  grid-column: 2;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .tl-detail-rate {
@@ -694,11 +928,16 @@ sup {
 
 @media (max-width: 920px) {
   .timeline-detail {
-    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .tl-detail-media {
+    grid-row: auto;
   }
 
   .tl-detail-rates {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .tl-legend {
@@ -707,16 +946,27 @@ sup {
 }
 
 @media (max-width: 560px) {
+  .tl-detail-rates {
+    grid-template-columns: 1fr;
+  }
+
+  .tl-detail-clips ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-grid {
+    transition: none;
+  }
+
+  .tl-row-label,
+  .tl-task,
+  .tl-cell,
+  .tl-cell .tl-marker,
+  .tl-band-count,
   .timeline-detail {
-    grid-template-columns: 1fr;
-  }
-
-  .tl-detail-thumb {
-    max-width: 110px;
-  }
-
-  .tl-detail-library {
-    grid-template-columns: 1fr;
+    animation: none;
   }
 }
 

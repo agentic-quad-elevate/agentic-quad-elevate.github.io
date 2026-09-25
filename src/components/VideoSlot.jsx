@@ -6,6 +6,9 @@ import { videoBase } from '../content.js'
 // `autoPlay` also mutes and loops the clip (browsers only allow silent autoplay).
 // `hoverControls` hides the native controls until the pointer is over the video
 // (or it receives focus / a touch), so an autoplaying teaser reads as a banner.
+// `loopRange` ([start, end] in seconds; `end` may be null for "to the end of
+// the clip") confines playback to that window: the clip starts at `start` and
+// jumps back there whenever `end` is reached.
 export default function VideoSlot({
   file,
   label,
@@ -13,6 +16,7 @@ export default function VideoSlot({
   aspect = '16 / 9',
   autoPlay = false,
   hoverControls = false,
+  loopRange = null,
   className = '',
 }) {
   const [missing, setMissing] = useState(!file)
@@ -30,6 +34,46 @@ export default function VideoSlot({
     const attempt = el.play()
     if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {})
   }, [autoPlay, missing])
+
+  // Loop a sub-range: check on every frame while visible (timeupdate alone
+  // only fires a few times a second) and on timeupdate as the background
+  // fallback. Rewind once the window's end is reached, and also whenever the
+  // position falls before the window (the native loop wrapping to 0, or a
+  // scrub), so a window with an open end still restarts at `start`.
+  const loopStart = loopRange ? (loopRange[0] ?? 0) : null
+  const loopEnd = loopRange ? (loopRange[1] ?? null) : null
+  useEffect(() => {
+    const el = ref.current
+    if (!el || loopStart === null || missing) return undefined
+    // Jump a few frames before the true end so the native wrap to 0 never shows.
+    const windowEnd = () =>
+      loopEnd ?? (Number.isFinite(el.duration) ? el.duration - 0.08 : Number.POSITIVE_INFINITY)
+    const rewind = () => {
+      const time = el.currentTime
+      if (time >= windowEnd() || (time < loopStart - 0.05 && !el.seeking)) {
+        el.currentTime = loopStart
+        if (el.paused && autoPlay) {
+          const attempt = el.play()
+          if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {})
+        }
+      }
+    }
+    const seekToStart = () => {
+      if (el.currentTime < loopStart) el.currentTime = loopStart
+    }
+    if (el.readyState >= 1) seekToStart()
+    else el.addEventListener('loadedmetadata', seekToStart, { once: true })
+    let frame = window.requestAnimationFrame(function tick() {
+      rewind()
+      frame = window.requestAnimationFrame(tick)
+    })
+    el.addEventListener('timeupdate', rewind)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      el.removeEventListener('timeupdate', rewind)
+      el.removeEventListener('loadedmetadata', seekToStart)
+    }
+  }, [loopStart, loopEnd, autoPlay, missing])
 
   if (missing) {
     return (

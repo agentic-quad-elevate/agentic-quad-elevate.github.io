@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import {
   capabilities,
   capabilityState,
@@ -9,8 +9,16 @@ import {
   tasks,
   trialsPerTask,
 } from '../content.js'
+import VideoSlot from './VideoSlot.jsx'
 
-const AUTOPLAY_MS = 3200
+// The timeline replays the task sequence: the grid starts with A01 alone and
+// gains one column per step, and controller / skill rows appear as the agent
+// acquires them. `reached` is the index of the newest task shown; the detail
+// panel always describes that task.
+const STEP_MS = 4000 // dwell on each newly reached task
+const HOLD_MS = 7000 // dwell on the full seven-task grid before looping
+const LAST = tasks.length - 1
+const OBS_SPLIT = 4 // A01–A04 get ground-truth poses; B01–B03 localize visually
 
 function Marker({ state }) {
   if (state === 'acquired') {
@@ -23,7 +31,7 @@ function Marker({ state }) {
   if (state === 'used') {
     return (
       <svg className="tl-marker is-used" viewBox="0 0 20 20" aria-hidden="true">
-        <circle cx="10" cy="10" r="6" />
+        <circle cx="10" cy="10" r="7" />
       </svg>
     )
   }
@@ -37,20 +45,28 @@ const stateLabel = {
   absent: 'not yet available',
 }
 
-function CapabilityRow({ capability, selected, onSelect }) {
+const clipBadge = {
+  acquired: 'New',
+  used: 'Used',
+  retained: 'In library',
+}
+
+const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`
+
+function CapabilityRow({ capability, reached, onSelect }) {
   return (
     <>
       <div className="tl-row-label">
         <code>{capability.id}</code>
       </div>
-      {tasks.map((task, position) => {
+      {tasks.slice(0, reached + 1).map((task, position) => {
         const state = capabilityState(capability, position)
         const prev = position > 0 ? capabilityState(capability, position - 1) : 'absent'
-        const next = position < tasks.length - 1 ? capabilityState(capability, position + 1) : 'absent'
+        const next = position < reached ? capabilityState(capability, position + 1) : 'absent'
         const exists = state !== 'absent'
         const lineLeft = exists && prev !== 'absent'
         const lineRight = exists && next !== 'absent'
-        const classes = ['tl-cell', position === selected ? 'is-selected' : '']
+        const classes = ['tl-cell', position === reached ? 'is-selected' : '']
         return (
           <button
             key={task.id}
@@ -70,21 +86,21 @@ function CapabilityRow({ capability, selected, onSelect }) {
   )
 }
 
-function SuccessRow({ method, selected, onSelect }) {
+function SuccessRow({ method, reached, onSelect }) {
   return (
     <>
       <div className="tl-row-label is-method">
         <span className="tl-swatch" style={{ background: `var(${method.colorVar})` }} aria-hidden="true" />
         <span>{method.label}</span>
       </div>
-      {tasks.map((task, position) => {
+      {tasks.slice(0, reached + 1).map((task, position) => {
         const successes = task.success[method.id]
         const rate = Math.round((100 * successes) / trialsPerTask)
         const classes = [
           'tl-cell',
           'is-rate',
           method.id === 'elevate' ? 'is-ours' : '',
-          position === selected ? 'is-selected' : '',
+          position === reached ? 'is-selected' : '',
         ]
         return (
           <button
@@ -105,35 +121,53 @@ function SuccessRow({ method, selected, onSelect }) {
   )
 }
 
-function LibraryChips({ items, position }) {
+function ObservationBand({ reached }) {
+  const groundTruth = Math.min(reached + 1, OBS_SPLIT)
+  const visual = reached + 1 - groundTruth
   return (
-    <ul className="tl-chips">
-      {items.map((capability) => {
-        const state = capabilityState(capability, position)
-        if (state === 'absent') return null
-        return (
-          <li key={capability.id} className={`tl-chip is-${state}`} title={capability.summary}>
-            <Marker state={state === 'retained' ? 'none' : state} />
-            <code>{capability.id}</code>
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      <div className="tl-row-label is-obs">Task observations</div>
+      <div className="tl-obs" style={{ gridColumn: `2 / span ${groundTruth}` }}>
+        Ground-truth target pose provided
+      </div>
+      {visual > 0 ? (
+        <div className="tl-obs is-visual" style={{ gridColumn: `${2 + OBS_SPLIT} / span ${visual}` }}>
+          Visual target localization only
+        </div>
+      ) : null}
+    </>
   )
 }
 
 export default function TaskTimeline() {
-  const [selected, setSelected] = useState(1)
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [reached, setReached] = useState(0)
+  const [isAuto, setIsAuto] = useState(true)
+  const [inView, setInView] = useState(false)
+  const figureRef = useRef(null)
   const detailId = useId()
+  const sliderId = useId()
+
+  // Only advance while the section is on screen, so the loop is at its start
+  // when a visitor scrolls to it rather than somewhere mid-sequence.
+  useEffect(() => {
+    const element = figureRef.current
+    if (!element || typeof window.IntersectionObserver !== 'function') {
+      setInView(true)
+      return undefined
+    }
+    const observer = new window.IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      threshold: 0.15,
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
-    if (!isPlaying) return undefined
-    const timerId = window.setInterval(() => {
-      setSelected((current) => (current + 1) % tasks.length)
-    }, AUTOPLAY_MS)
-    return () => window.clearInterval(timerId)
-  }, [isPlaying])
+    if (!isAuto || !inView) return undefined
+    const delay = reached === LAST ? HOLD_MS : STEP_MS
+    const timerId = window.setTimeout(() => setReached((current) => (current + 1) % tasks.length), delay)
+    return () => window.clearTimeout(timerId)
+  }, [isAuto, inView, reached])
 
   useEffect(() => {
     tasks.forEach((task) => {
@@ -142,85 +176,111 @@ export default function TaskTimeline() {
     })
   }, [])
 
+  // Any manual choice hands control to the visitor until they press play again.
   const select = (position) => {
-    setIsPlaying(false)
-    setSelected(position)
+    setIsAuto(false)
+    setReached(Math.min(LAST, Math.max(0, position)))
   }
 
-  const step = (delta) => select((selected + delta + tasks.length) % tasks.length)
-
-  const task = tasks[selected]
+  const task = tasks[reached]
   const acquiredHere = capabilities.filter((capability) => task.usage[capability.id] === 'acquired')
-  const controllerCount = controllers.filter((c) => capabilityState(c, selected) !== 'absent').length
+  const liveControllers = controllers.filter((c) => capabilityState(c, reached) !== 'absent')
+  const liveSkills = skills.filter((c) => capabilityState(c, reached) !== 'absent')
+  // Every controller in the library at this step gets a clip, badged with its
+  // role on the current task (newly learned, used, or only retained).
+  const libraryClips = liveControllers.filter((c) => c.video)
+  const progress = (100 * reached) / LAST
 
   return (
-    <figure className="timeline">
+    <figure className="timeline" ref={figureRef}>
       <div className="timeline-controls">
         <button
-          className="tl-play-button"
+          className={`tl-play-button${isAuto ? ' is-auto' : ''}`}
           type="button"
-          aria-label={isPlaying ? 'Stop stepping through tasks' : 'Step through tasks automatically'}
-          aria-pressed={isPlaying}
-          onClick={() => setIsPlaying((value) => !value)}
+          aria-pressed={isAuto}
+          aria-label={isAuto ? 'Auto-play is on; switch to manual control' : 'Manual control; switch to auto-play'}
+          onClick={() => setIsAuto((value) => !value)}
         >
-          <span className={isPlaying ? 'tl-stop-icon' : 'tl-play-icon'} aria-hidden="true" />
+          <span className={isAuto ? 'tl-pause-icon' : 'tl-play-icon'} aria-hidden="true" />
         </button>
-        <button className="tl-step-button" type="button" onClick={() => step(-1)} aria-label="Previous task">
-          ‹
-        </button>
+
+        <div className="tl-slider">
+          <label className="tl-sr-only" htmlFor={sliderId}>
+            Tasks reached
+          </label>
+          <input
+            id={sliderId}
+            className="tl-range"
+            type="range"
+            min={0}
+            max={LAST}
+            step={1}
+            value={reached}
+            style={{ '--tl-progress': `${progress}%` }}
+            aria-valuetext={`After ${task.id}: ${reached + 1} of ${tasks.length} tasks`}
+            onChange={(event) => select(Number(event.target.value))}
+            onPointerDown={() => setIsAuto(false)}
+          />
+          <div className="tl-ticks" aria-hidden="true">
+            {tasks.map((item, position) => (
+              <button
+                key={item.id}
+                type="button"
+                tabIndex={-1}
+                className={`tl-tick${position <= reached ? ' is-reached' : ''}${position === reached ? ' is-current' : ''}`}
+                style={{ '--tl-stop': position / LAST }}
+                onClick={() => select(position)}
+              >
+                {item.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <span className="tl-position" aria-live="polite">
-          Task {selected + 1} of {tasks.length} · library: {controllerCount}{' '}
-          {controllerCount === 1 ? 'controller' : 'controllers'}
+          After {task.id} · {count(liveControllers.length, 'controller')} · {count(liveSkills.length, 'skill')}
         </span>
-        <button className="tl-step-button" type="button" onClick={() => step(1)} aria-label="Next task">
-          ›
-        </button>
-        <ul className="tl-legend" aria-label="Legend">
-          <li>
-            <Marker state="acquired" /> Acquired here
-          </li>
-          <li>
-            <Marker state="used" /> Reused
-          </li>
-          <li>
-            <span className="tl-legend-line" aria-hidden="true" /> Retained in library
-          </li>
-        </ul>
       </div>
+
+      <ul className="tl-legend" aria-label="Legend">
+        <li>
+          <Marker state="acquired" /> Acquired here
+        </li>
+        <li>
+          <Marker state="used" /> Reused
+        </li>
+        <li>
+          <span className="tl-legend-line" aria-hidden="true" /> Retained in library
+        </li>
+      </ul>
 
       <div className="timeline-scroll">
         <div
           className="timeline-grid"
+          style={{ '--tl-n': reached + 1 }}
           role="group"
-          aria-label="Seven-task sequence with capability acquisition and reuse"
+          aria-label="Task sequence with capability acquisition and reuse"
           onKeyDown={(event) => {
             if (event.key === 'ArrowRight') {
               event.preventDefault()
-              step(1)
+              select(reached + 1)
             } else if (event.key === 'ArrowLeft') {
               event.preventDefault()
-              step(-1)
+              select(reached - 1)
             }
           }}
         >
-          <div className="tl-row-label is-obs">Task observations</div>
-          <div className="tl-obs" style={{ gridColumn: '2 / span 4' }}>
-            Ground-truth target pose provided
-          </div>
-          <div className="tl-obs is-visual" style={{ gridColumn: '6 / span 3' }}>
-            Visual target localization only
-          </div>
+          <ObservationBand reached={reached} />
           <div className="tl-row-label is-header">
             <span className="tl-family">Task</span>
           </div>
-          {tasks.map((item, position) => {
-            const isActive = position === selected
+          {tasks.slice(0, reached + 1).map((item, position) => {
+            const isActive = position === reached
             return (
               <button
                 key={item.id}
                 type="button"
-                role="tab"
-                aria-selected={isActive}
+                aria-current={isActive ? 'step' : undefined}
                 aria-controls={detailId}
                 className={`tl-task${isActive ? ' is-active' : ''}`}
                 onClick={() => select(position)}
@@ -236,60 +296,65 @@ export default function TaskTimeline() {
             )
           })}
 
-          <div className="tl-band" style={{ gridColumn: '1 / -1' }}>
-            <span>Learned controllers</span>
+          <div className="tl-band" style={{ gridColumn: `1 / span ${reached + 2}` }}>
+            <span>Controllers</span>
+            <span className="tl-band-count" key={liveControllers.length}>
+              {liveControllers.length} in library
+            </span>
             <span className="tl-band-note">Trained with RL. The agent adds three to the initial one.</span>
           </div>
-          {controllers.map((capability) => (
-            <CapabilityRow key={capability.id} capability={capability} selected={selected} onSelect={select} />
+          {liveControllers.map((capability) => (
+            <CapabilityRow key={capability.id} capability={capability} reached={reached} onSelect={select} />
           ))}
 
-          <div className="tl-band is-skills" style={{ gridColumn: '1 / -1' }}>
-            <span>High-level skills</span>
+          <div className="tl-band is-skills" style={{ gridColumn: `1 / span ${reached + 2}` }}>
+            <span>Skills</span>
+            <span className="tl-band-count" key={liveSkills.length}>
+              {liveSkills.length} in library
+            </span>
             <span className="tl-band-note">Python programs written by the agent that coordinate controllers.</span>
           </div>
-          {skills.map((capability) => (
-            <CapabilityRow key={capability.id} capability={capability} selected={selected} onSelect={select} />
+          {liveSkills.map((capability) => (
+            <CapabilityRow key={capability.id} capability={capability} reached={reached} onSelect={select} />
           ))}
 
-          <div className="tl-band is-rates" style={{ gridColumn: '1 / -1' }}>
+          <div className="tl-band is-rates" style={{ gridColumn: `1 / span ${reached + 2}` }}>
             <span>Success rate</span>
             <span className="tl-band-note">50 evaluation variants per task, final program of each method.</span>
           </div>
           {methods.map((method) => (
-            <SuccessRow key={method.id} method={method} selected={selected} onSelect={select} />
+            <SuccessRow key={method.id} method={method} reached={reached} onSelect={select} />
           ))}
         </div>
       </div>
 
-      <div className="timeline-detail" id={detailId} role="tabpanel">
-        <img className="tl-detail-thumb" src={`${imgBase}/tasks/${task.id}.png`} alt="" />
+      <div className="timeline-detail" id={detailId} key={task.id}>
+        <div className="tl-detail-media">
+          {task.video ? (
+            <VideoSlot
+              file={task.video}
+              label={`${task.id} rollout in simulation`}
+              aspect="640 / 368"
+              autoPlay
+              hoverControls
+              loopRange={task.loop ?? null}
+              className="tl-detail-video"
+            />
+          ) : (
+            <img className="tl-detail-thumb" src={`${imgBase}/tasks/${task.id}.png`} alt="" />
+          )}
+          <p className="tl-detail-media-label">{task.id} rollout · ELEVATE</p>
+        </div>
+
         <div className="tl-detail-body">
           <p className="tl-detail-kicker">
             {task.id} · {task.family}
           </p>
           <h3 className="tl-detail-title">{task.objective}</h3>
           <p className="tl-detail-story">{task.story}</p>
-          <p className="tl-detail-note">{task.note}</p>
-          <div className="tl-detail-library">
-            <div>
-              <p className="tl-detail-label">
-                Controllers after {task.id}
-                {acquiredHere.some((c) => c.kind === 'controller') ? (
-                  <span className="tl-detail-badge">new</span>
-                ) : null}
-              </p>
-              <LibraryChips items={controllers} position={selected} />
-            </div>
-            <div>
-              <p className="tl-detail-label">
-                Skills after {task.id}
-                {acquiredHere.some((c) => c.kind === 'skill') ? <span className="tl-detail-badge">new</span> : null}
-              </p>
-              <LibraryChips items={skills} position={selected} />
-            </div>
-          </div>
+          {task.note ? <p className="tl-detail-note">{task.note}</p> : null}
         </div>
+
         <div className="tl-detail-rates" aria-label={`Success rates on ${task.id}`}>
           {methods.map((method) => {
             const successes = task.success[method.id]
@@ -310,6 +375,41 @@ export default function TaskTimeline() {
             )
           })}
         </div>
+
+        {libraryClips.length > 0 ? (
+          <div className="tl-detail-clips">
+            <p className="tl-detail-label">
+              Controller library after {task.id}
+              {acquiredHere.some((c) => c.kind === 'controller') ? (
+                <span className="tl-detail-badge">new</span>
+              ) : null}
+            </p>
+            <ul>
+              {libraryClips.map((capability) => {
+                const state = capabilityState(capability, reached)
+                return (
+                  <li key={capability.id} className={`tl-clip is-${state}`}>
+                    <div className="tl-clip-frame">
+                      <VideoSlot
+                        file={capability.video}
+                        label={`${capability.id} controller, ${stateLabel[state]} on ${task.id}`}
+                        aspect="16 / 9"
+                        autoPlay
+                        hoverControls
+                        loopRange={capability.loop ?? null}
+                        className="tl-detail-clip"
+                      />
+                      <span className="tl-clip-badge" aria-hidden="true">
+                        {clipBadge[state]}
+                      </span>
+                    </div>
+                    <code>{capability.id}</code>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </figure>
   )
