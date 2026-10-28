@@ -3,6 +3,7 @@ import { ANONYMOUS, demos, identity, imgBase, paper, videos } from './content.js
 import Prose from './components/Prose.jsx'
 import RealExperiments from './components/RealExperiments.jsx'
 import RefinementSteps from './components/RefinementSteps.jsx'
+import ResultsTable from './components/ResultsTable.jsx'
 import StrategyComparison from './components/StrategyComparison.jsx'
 import TaskTimeline from './components/TaskTimeline.jsx'
 import VideoSlot from './components/VideoSlot.jsx'
@@ -40,7 +41,9 @@ function Hero() {
                 </span>
               ))}
             </div>
-            <p className="corresponding-authors">{identity.correspondingText}</p>
+            {identity.correspondingText && (
+              <p className="corresponding-authors">{identity.correspondingText}</p>
+            )}
           </>
         )}
 
@@ -90,14 +93,14 @@ function App() {
         <div className="container is-max-widescreen">
           <h2 className="title">Method Overview</h2>
           <figure className="figure method-figure">
-            <img src={`${imgBase}/method.png`} alt="Overview of ELEVATE" />
+            <img src={`${imgBase}/method.webp`} alt="Overview of ELEVATE" />
             <figcaption>
               <strong>Overview of ELEVATE.</strong> The agent synthesizes and refines task programs using its
               capability library. Persistent failures after refinement (1) motivate controller learning (2): the
               agent assesses feasibility, formulates an RL problem, and revises training using behavior feedback.
               Validated controllers are added to the library and composed into high-level skills (3), enabling
               renewed task execution and eventual completion (4). The right panels schematically illustrate bottle
-              placement: <code>wall_stand</code> elevates the body using wall support, while{' '}
+              placement: <code>wall_stance</code> elevates the body using wall support, while{' '}
               <code>wall_reach</code> enables manipulation from that stance. The <code>wall_high_reach</code> skill
               coordinates these controllers.
             </figcaption>
@@ -115,6 +118,19 @@ function App() {
             new controller with reinforcement learning, wraps it in a Python skill, and keeps both for later tasks.
             Press play to watch the library grow task by task, or drag the slider to any point in the sequence.
           </p>
+        </div>
+      </section>
+
+      <section className="section results-section">
+        <div className="container is-max-widescreen">
+          <h2 className="title">ELEVATE Increases Task Coverage</h2>
+          <p className="results-intro">
+            ELEVATE is compared with two coding-agent baselines that keep the initial controller library fixed,
+            Code-as-Policy and ASPIRE. On A01 and B01, which the initial controller already supports, ELEVATE shows
+            no advantage over ASPIRE. On A02–A04 and B02–B03, both baselines fail on every held-out trial, while
+            ELEVATE reaches 98.4–100% mean success and 99.0% overall.
+          </p>
+          <ResultsTable />
         </div>
       </section>
 

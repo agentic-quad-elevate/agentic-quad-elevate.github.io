@@ -7,8 +7,9 @@ import { videoBase } from '../content.js'
 // `hoverControls` hides the native controls until the pointer is over the video
 // (or it receives focus / a touch), so an autoplaying teaser reads as a banner.
 // `loopRange` ([start, end] in seconds; `end` may be null for "to the end of
-// the clip") confines playback to that window: the clip starts at `start` and
-// jumps back there whenever `end` is reached.
+// the clip", and a negative `start` counts back from the end, so [-10, null]
+// is the last ten seconds) confines playback to that window: the clip starts
+// at `start` and jumps back there whenever `end` is reached.
 export default function VideoSlot({
   file,
   label,
@@ -45,13 +46,19 @@ export default function VideoSlot({
   useEffect(() => {
     const el = ref.current
     if (!el || loopStart === null || missing) return undefined
+    // A negative start is measured from the end; it resolves once the duration is known.
+    const windowStart = () => {
+      if (loopStart >= 0) return loopStart
+      return Number.isFinite(el.duration) ? Math.max(0, el.duration + loopStart) : 0
+    }
     // Jump a few frames before the true end so the native wrap to 0 never shows.
     const windowEnd = () =>
       loopEnd ?? (Number.isFinite(el.duration) ? el.duration - 0.08 : Number.POSITIVE_INFINITY)
     const rewind = () => {
       const time = el.currentTime
-      if (time >= windowEnd() || (time < loopStart - 0.05 && !el.seeking)) {
-        el.currentTime = loopStart
+      const start = windowStart()
+      if (time >= windowEnd() || (time < start - 0.05 && !el.seeking)) {
+        el.currentTime = start
         if (el.paused && autoPlay) {
           const attempt = el.play()
           if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {})
@@ -59,7 +66,8 @@ export default function VideoSlot({
       }
     }
     const seekToStart = () => {
-      if (el.currentTime < loopStart) el.currentTime = loopStart
+      const start = windowStart()
+      if (el.currentTime < start) el.currentTime = start
     }
     if (el.readyState >= 1) seekToStart()
     else el.addEventListener('loadedmetadata', seekToStart, { once: true })

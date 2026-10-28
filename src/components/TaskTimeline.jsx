@@ -6,6 +6,7 @@ import {
   methods,
   skills,
   tasks,
+  runsPerTask,
   trialsPerTask,
 } from '../content.js'
 import Prose from './Prose.jsx'
@@ -86,41 +87,6 @@ function CapabilityRow({ capability, reached, onSelect }) {
   )
 }
 
-function SuccessRow({ method, reached, onSelect }) {
-  return (
-    <>
-      <div className="tl-row-label is-method">
-        <span className="tl-swatch" style={{ background: `var(${method.colorVar})` }} aria-hidden="true" />
-        <span>{method.label}</span>
-      </div>
-      {tasks.slice(0, reached + 1).map((task, position) => {
-        const successes = task.success[method.id]
-        const rate = Math.round((100 * successes) / trialsPerTask)
-        const classes = [
-          'tl-cell',
-          'is-rate',
-          method.id === 'elevate' ? 'is-ours' : '',
-          position === reached ? 'is-selected' : '',
-        ]
-        return (
-          <button
-            key={task.id}
-            type="button"
-            className={classes.join(' ').trim()}
-            onClick={() => onSelect(position)}
-            title={`${method.label} on ${task.id}: ${successes}/${trialsPerTask}`}
-          >
-            <span className="tl-rate">{rate}%</span>
-            <span className="tl-rate-bar" aria-hidden="true">
-              <span style={{ width: `${rate}%`, background: `var(${method.colorVar})` }} />
-            </span>
-          </button>
-        )
-      })}
-    </>
-  )
-}
-
 function ObservationBand({ reached }) {
   const groundTruth = Math.min(reached + 1, OBS_SPLIT)
   const visual = reached + 1 - groundTruth
@@ -161,7 +127,7 @@ function LibraryRow({ title, items, reached, task }) {
                 <VideoSlot
                   file={capability.video}
                   label={`${capability.id} ${capability.kind}, ${stateLabel[state]} on ${task.id}`}
-                  aspect="16 / 9"
+                  aspect="4 / 3"
                   autoPlay
                   hoverControls
                   loopRange={capability.loop ?? null}
@@ -354,14 +320,6 @@ export default function TaskTimeline() {
           {liveSkills.map((capability) => (
             <CapabilityRow key={capability.id} capability={capability} reached={reached} onSelect={select} />
           ))}
-
-          <div className="tl-band is-rates" style={{ gridColumn: `1 / span ${reached + 2}` }}>
-            <span>Success rate</span>
-            <span className="tl-band-note">50 evaluation variants per task, final program of each method.</span>
-          </div>
-          {methods.map((method) => (
-            <SuccessRow key={method.id} method={method} reached={reached} onSelect={select} />
-          ))}
         </div>
       </div>
 
@@ -398,10 +356,12 @@ export default function TaskTimeline() {
           ) : null}
         </div>
 
-        <div className="tl-detail-rates" aria-label={`Success rates on ${task.id}`}>
+        <div
+          className="tl-detail-rates"
+          aria-label={`Mean success rates on ${task.id} across ${runsPerTask} independent runs`}
+        >
           {methods.map((method) => {
-            const successes = task.success[method.id]
-            const rate = Math.round((100 * successes) / trialsPerTask)
+            const { mean, std } = task.success[method.id]
             return (
               <div className="tl-detail-rate" key={method.id}>
                 <span className="tl-detail-rate-label">
@@ -409,14 +369,17 @@ export default function TaskTimeline() {
                   {method.label}
                 </span>
                 <span className="tl-detail-rate-track" aria-hidden="true">
-                  <span style={{ width: `${rate}%`, background: `var(${method.colorVar})` }} />
+                  <span style={{ width: `${mean}%`, background: `var(${method.colorVar})` }} />
                 </span>
                 <span className="tl-detail-rate-value">
-                  {rate}% <small>({successes}/{trialsPerTask})</small>
+                  {mean.toFixed(1)}% <small>± {std.toFixed(1)}</small>
                 </span>
               </div>
             )
           })}
+          <p className="tl-detail-rates-note">
+            Mean ± standard deviation across {runsPerTask} independent runs, {trialsPerTask} variants per task.
+          </p>
         </div>
 
         <LibraryRow title="Controller library" items={controllers} reached={reached} task={task} />

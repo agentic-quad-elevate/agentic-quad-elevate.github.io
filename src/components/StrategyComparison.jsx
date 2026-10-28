@@ -23,6 +23,7 @@ export default function StrategyComparison() {
               aspect="640 / 368"
               autoPlay
               hoverControls
+              loopRange={variant.loop ?? null}
               className="strategy-video"
             />
             <p className="strategy-caption">
@@ -32,15 +33,17 @@ export default function StrategyComparison() {
             <ul className="strategy-controllers">
               {variant.controllers.map((controller) => (
                 <li key={controller.id}>
-                  <VideoSlot
-                    file={controller.video}
-                    label={`${controller.id} controller`}
-                    aspect="16 / 9"
-                    autoPlay
-                    hoverControls
-                    loopRange={controller.loop ?? null}
-                    className="strategy-clip"
-                  />
+                  <div className="strategy-clip-frame">
+                    <VideoSlot
+                      file={controller.video}
+                      label={`${controller.id} controller`}
+                      aspect="4 / 3"
+                      autoPlay
+                      hoverControls
+                      loopRange={controller.loop ?? null}
+                      className="strategy-clip"
+                    />
+                  </div>
                   <code>{controller.id}</code>
                 </li>
               ))}

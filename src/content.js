@@ -24,7 +24,7 @@ export const paper = {
     { label: 'Video', href: '#video', iconClass: 'fas fa-video' },
   ],
   abstract:
-    'Quadrupedal manipulators can extend their workspace through whole-body interaction, but task-planning agents remain bounded by the capabilities of their available controllers. We present ELEVATE, a framework that uses persistent failures during task-program refinement to identify and acquire missing whole-body control capabilities. When repeated execution failures suggest a missing physical capability, a coding agent formulates and iteratively refines a reinforcement-learning problem, specifying behavior-specific rewards, curricula, and termination conditions. The resulting controller is validated, added to the capability library, and composed with existing controllers through reusable Python skills. Starting from a single pretrained loco-manipulation controller, ELEVATE autonomously acquires controllers for wall-supported elevation, supported manipulation, and wall descent across a seven-task simulation sequence. The acquired capabilities are reused on subsequent reaching and object-manipulation tasks, achieving 92%–100% success on five tasks beyond the initial controller’s workspace. Fixed-library coding agents fail on these five tasks, while ELEVATE uses additional controller-training computation to expand task coverage. Without real-robot training or fine-tuning, the acquired controllers transfer to a physical quadrupedal manipulator, achieving 18/20 successes in rack retrieval and 16/20 in floor-to-rack placement.',
+    'Quadrupedal manipulators can extend their workspace through whole-body interaction, but task-planning agents’ capabilities remain limited by their available controllers. We present ELEVATE, a framework that uses persistent failures during task-program refinement to identify and acquire missing whole-body control capabilities. When these failures suggest a missing physical capability, a coding agent formulates and iteratively refines a reinforcement-learning problem, specifying behavior-specific rewards, curricula, and termination conditions. Validated controllers are added to the capability library and composed with existing controllers to retry the task. Starting from a single pretrained loco-manipulation controller, ELEVATE autonomously acquires controllers for wall-supported elevation, supported manipulation, and wall descent across a sequence of seven simulation tasks. These controllers are reused in subsequent reaching and object-manipulation tasks. On the five tasks beyond the initial controller’s workspace, ELEVATE achieves mean success rates of 98.4%–100% across five independent runs, while coding-agent baselines with a fixed controller library fail to complete these tasks. The synthesized task programs, together with the acquired controllers, also transfer to a physical quadrupedal manipulator without real-robot training or fine-tuning, achieving 18/20 successes in rack retrieval and 16/20 in floor-to-rack placement.',
 }
 
 // Simulation rollouts used by the capability-growth timeline live under
@@ -89,7 +89,8 @@ export const realExperiments = [
     score: '18/20',
     video: videos.b02,
     videoLabel: 'B02 rack retrieval on the physical robot',
-    storyboard: 'real_b02_storyboard.png',
+    storyboard: 'real_b02_storyboard.webp',
+    storyboardLabel: 193 / 2000, // width of the Skills / Controllers label column, as a fraction of the image
     storyboardAlt: 'B02 storyboard with active skills and controllers',
     caption:
       'Retrieve a bottle from the 1.2 m rack and return to a four-foot stance while keeping hold of it. Bands show the active skill and controller. The two failures come from limited gripper contact that lets the bottle slip during floor recovery.',
@@ -101,7 +102,8 @@ export const realExperiments = [
     score: '16/20',
     video: videos.b03,
     videoLabel: 'B03 floor-to-rack placement on the physical robot',
-    storyboard: 'real_b03_storyboard.png',
+    storyboard: 'real_b03_storyboard.webp',
+    storyboardLabel: 212 / 2000,
     storyboardAlt: 'B03 storyboard with active skills and controllers',
     caption:
       'Pick a bottle up from the floor and place it upright on the rack. Failures mainly arise from unintended gripper contact during floor pickup.',
@@ -115,6 +117,7 @@ export const methods = [
 ]
 
 export const trialsPerTask = 50
+export const runsPerTask = 5
 
 export const controllers = [
   {
@@ -125,9 +128,9 @@ export const controllers = [
     summary: 'Pretrained loco-manipulation: base velocity, 6D end-effector pose, and gripper commands.',
   },
   {
-    id: 'wall_stand',
+    id: 'wall_stance',
     kind: 'controller',
-    video: simController('wall_stand'),
+    video: simController('wall_stance'),
     loop: [0, 2], // seconds: replay only the stand-up itself
     acquiredAt: 'A02',
     summary: 'Body reconfiguration: raise the arm mount by placing the front feet on the wall.',
@@ -163,7 +166,7 @@ export const skills = [
     video: simSkill('wall_high_reach'),
     loop: [5, null],
     acquiredAt: 'A02',
-    summary: 'Approach the wall, raise the body with wall_stand, and reach the target with wall_reach.',
+    summary: 'Approach the wall, raise the body with wall_stance, and reach the target with wall_reach.',
   },
   {
     id: 'floor_recover',
@@ -189,11 +192,12 @@ export const strategies = {
       title: 'Default environment',
       tag: 'Wall support',
       video: simTask('A02.mp4'),
+      loop: [-10, null], // last ten seconds, so both rollouts play in step
       videoLabel: 'A02 solved with wall support',
       caption:
-        'The only support in the default environment is the wall. The agent trains wall_stand to raise the body with the front feet on the wall and wall_reach to track targets from that stance, then composes them into the wall_high_reach skill.',
+        'The only support in the default environment is the wall. The agent trains wall_stance to raise the body with the front feet on the wall and wall_reach to track targets from that stance, then composes them into the wall_high_reach skill.',
       controllers: [
-        { id: 'wall_stand', video: simController('wall_stand'), loop: [0, 2] },
+        { id: 'wall_stance', video: simController('wall_stance'), loop: [0, 2] },
         { id: 'wall_reach', video: simController('wall_reach') },
       ],
     },
@@ -202,6 +206,7 @@ export const strategies = {
       title: 'Box environment',
       tag: 'Box support',
       video: simTask('A02_box.mp4'),
+      loop: [-10, null],
       videoLabel: 'A02 solved with box support',
       caption:
         'With a box placed in the environment, the same failure-driven process instead learns box_stand to raise the body with the box as support and box_reach to manipulate from that stance, reaching the target without using the wall.',
@@ -213,46 +218,45 @@ export const strategies = {
   ],
 }
 
-// "How the Agent Refines a Controller": wall_stand after each round of the
-// agent's own reward revision. `changes` are the training changes the agent
-// made at that stage (kind: add / remove / tune); `outcome` is what the
-// resulting controller does.
+// "How the Agent Refines a Controller": wall_stance on A02 in Run 5 after each
+// round of the agent's own reward revision (paper Fig. 5). `changes` are the
+// training changes the agent made at that stage (kind: add / remove / tune);
+// `outcome` is the agent's finding from the diagnostic or evaluation episodes.
 export const refinement = {
   intro:
-    'When a task keeps failing, the agent does not just retry the program. It formulates a reinforcement-learning problem for the missing capability, watches how the trained controller behaves, and revises the rewards and training aids itself. wall_stand shows this loop: each stage below is the controller after one round of revision.',
+    'When a task keeps failing, the agent does not just retry the program. It formulates a reinforcement-learning problem for the missing capability, inspects reward components and recorded rollouts, and revises the training formulation itself. wall_stance on A02 in Run 5 shows this loop: each stage below is the controller after one round of revision, with the agent’s own finding from that round.',
   stages: [
     {
       id: 'initial',
       label: 'Initial formulation',
-      video: simController('wall_stand_initial'),
-      loop: [0, 2],
-      changes: [{ kind: 'add', text: 'Reward for reaching the target pose, from the reusable training template' }],
-      outcome: 'Fails to reach the desired position.',
+      video: simController('wall_stance_initial'),
+      loop: [0, 4],
+      changes: [{ kind: 'add', text: 'Reward for pitch and shoulder height' }],
+      outcome:
+        'The robot sits back: pitch increases while shoulder height falls, and the front feet remain at the wall’s base.',
       outcomeKind: 'fail',
     },
     {
       id: 'mid',
       label: 'Reward revision',
-      video: simController('wall_stand_mid'),
-      loop: [0, 2],
+      video: simController('wall_stance_mid'),
+      loop: [0, 4],
       changes: [
         { kind: 'add', text: 'Reward for raising the body height' },
-        { kind: 'add', text: 'Reward for placing the front feet on the wall while the rear feet stay on the floor' },
-        { kind: 'add', text: 'Upward assist force on the body to help it rise during training' },
+        { kind: 'add', text: 'Reward for placing the front feet on the wall' },
+        { kind: 'add', text: 'Increased upward assist force' },
       ],
-      outcome: 'Raises the body onto the wall, still helped by the assist force.',
+      outcome: 'With assistance enabled, 96% of diagnostic episodes reach the supported stance.',
       outcomeKind: 'partial',
     },
     {
       id: 'final',
-      label: 'Refinement',
-      video: simController('wall_stand'),
-      loop: [0, 2],
-      changes: [
-        { kind: 'tune', text: 'Reward terms rebalanced' },
-        { kind: 'remove', text: 'Assist force gradually removed' },
-      ],
-      outcome: 'A usable wall_stand controller that stands on the wall unaided.',
+      label: 'Further training',
+      video: simController('wall_stance_final'),
+      loop: [0, 4],
+      changes: [{ kind: 'remove', text: 'Upward assist force' }],
+      outcome:
+        'With assistance disabled, 100% of evaluation episodes reach the stance and run to the time limit. Selected and exported.',
       outcomeKind: 'success',
     },
   ],
@@ -275,10 +279,10 @@ export const tasks = [
     video: simTask('A01.mp4'),
     loop: [8, null], // seconds: replay from 8 s to the end of the clip
     objective: 'Reach a random floor-level target.',
-    success: { elevate: 49, aspire: 50, cap: 43 },
+    success: { elevate: { mean: 99.2, std: 1.1 }, aspire: { mean: 99.6, std: 0.9 }, cap: { mean: 73.2, std: 11.6 } },
     usage: { loco_manipulation: 'used' },
     story:
-      'The pretrained loco-manipulation controller is enough. All three methods solve the task from the initial library.',
+      'The pretrained loco-manipulation controller is enough. ELEVATE and ASPIRE both solve the task from the initial library, and Code-as-Policy averages 73%.',
     note: '',
   },
   {
@@ -288,15 +292,15 @@ export const tasks = [
     video: simTask('A02.mp4'),
     loop: [9, null],
     objective: 'Reach a target 1.25 m above the floor, 0.30 m from the wall.',
-    success: { elevate: 50, aspire: 0, cap: 0 },
+    success: { elevate: { mean: 100.0, std: 0.0 }, aspire: { mean: 0.0, std: 0.0 }, cap: { mean: 0.0, std: 0.0 } },
     usage: {
       loco_manipulation: 'used',
-      wall_stand: 'acquired',
+      wall_stance: 'acquired',
       wall_reach: 'acquired',
       wall_high_reach: 'acquired',
     },
     story:
-      'With only the loco-manipulation controller, repeated development sweeps yield 0/15 successes. The agent diagnoses insufficient arm-base elevation, then trains wall_stand to raise the body with front-foot wall support and wall_reach to track targets from that stance. It composes both into the wall_high_reach skill.',
+      'With only the loco-manipulation controller, repeated development sweeps yield 0/15 successes. The agent diagnoses insufficient arm-base elevation, then trains wall_stance to raise the body with front-foot wall support and wall_reach to track targets from that stance. It composes both into the wall_high_reach skill.',
     note: 'Both controllers are formulated, trained, revised, and validated by the agent without human intervention.',
   },
   {
@@ -306,10 +310,10 @@ export const tasks = [
     video: simTask('A03.mp4'),
     loop: [3, null],
     objective: 'Reach three elevated waypoints in order.',
-    success: { elevate: 48, aspire: 0, cap: 0 },
+    success: { elevate: { mean: 98.4, std: 2.6 }, aspire: { mean: 0.0, std: 0.0 }, cap: { mean: 0.0, std: 0.0 } },
     usage: {
       loco_manipulation: 'used',
-      wall_stand: 'used',
+      wall_stance: 'used',
       wall_reach: 'used',
       wall_high_reach: 'used',
     },
@@ -324,10 +328,10 @@ export const tasks = [
     video: simTask('A04.mp4'),
     loop: [9, null],
     objective: 'Reach targets at 1.25 m then 0.40 m in the same wall column.',
-    success: { elevate: 46, aspire: 0, cap: 0 },
+    success: { elevate: { mean: 100.0, std: 0.0 }, aspire: { mean: 0.0, std: 0.0 }, cap: { mean: 0.0, std: 0.0 } },
     usage: {
       loco_manipulation: 'used',
-      wall_stand: 'used',
+      wall_stance: 'used',
       wall_reach: 'used',
       wall_descent: 'acquired',
       wall_high_reach: 'used',
@@ -343,10 +347,10 @@ export const tasks = [
     short: 'Floor pickup',
     video: simTask('B01/run_002-third-person-camera-step-0.mp4'),
     objective: 'Lift a floor bottle or soda can at least 0.30 m above the floor.',
-    success: { elevate: 50, aspire: 50, cap: 50 },
+    success: { elevate: { mean: 97.6, std: 3.6 }, aspire: { mean: 99.2, std: 1.8 }, cap: { mean: 88.0, std: 18.3 } },
     usage: { loco_manipulation: 'used', floor_pickup: 'used' },
     story:
-      'The predefined floor_pickup skill combines with the initial loco-manipulation controller. All three methods reach 50/50 on bottles and soda cans.',
+      'The predefined floor_pickup skill combines with the initial loco-manipulation controller. ELEVATE and ASPIRE both exceed 97% on bottles and soda cans, and Code-as-Policy averages 88%.',
     note: 'No new controllers are trained in B01, B02, or B03.',
   },
   {
@@ -356,10 +360,10 @@ export const tasks = [
     video: simTask('B02/B02-third-person-camera-step-0.mp4'),
     loop: [5, null],
     objective: 'Retrieve a bottle from a 1.2 m-high rack; retain it with all four feet on the floor.',
-    success: { elevate: 50, aspire: 0, cap: 0 },
+    success: { elevate: { mean: 99.6, std: 0.9 }, aspire: { mean: 0.0, std: 0.0 }, cap: { mean: 0.0, std: 0.0 } },
     usage: {
       loco_manipulation: 'used',
-      wall_stand: 'used',
+      wall_stance: 'used',
       wall_reach: 'used',
       wall_descent: 'used',
       wall_high_reach: 'used',
@@ -375,10 +379,10 @@ export const tasks = [
     short: 'Rack placement',
     video: simTask('B03/B03-third-person-camera-step-0.mp4'),
     objective: 'Pick up a floor bottle and place it on the rack; the released bottle remains upright on the shelf.',
-    success: { elevate: 47, aspire: 0, cap: 0 },
+    success: { elevate: { mean: 98.4, std: 0.9 }, aspire: { mean: 0.0, std: 0.0 }, cap: { mean: 0.0, std: 0.0 } },
     usage: {
       loco_manipulation: 'used',
-      wall_stand: 'used',
+      wall_stance: 'used',
       wall_reach: 'used',
       floor_pickup: 'used',
       wall_high_reach: 'used',
@@ -400,8 +404,11 @@ export function capabilityState(capability, taskPosition) {
   return bornAt < taskPosition ? 'retained' : 'absent'
 }
 
-export const totals = methods.map((method) => {
-  const successes = tasks.reduce((sum, task) => sum + task.success[method.id], 0)
-  const trials = tasks.length * trialsPerTask
-  return { ...method, successes, trials, rate: (100 * successes) / trials }
-})
+// Overall row of the paper's Table III: mean ± sample standard deviation of
+// the run-level success rates across all seven tasks.
+const overall = {
+  elevate: { mean: 99.0, std: 0.7 },
+  aspire: { mean: 28.4, std: 0.3 },
+  cap: { mean: 23.0, std: 3.4 },
+}
+export const totals = methods.map((method) => ({ ...method, ...overall[method.id] }))

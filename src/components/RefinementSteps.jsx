@@ -23,15 +23,17 @@ export default function RefinementSteps() {
               {stage.label}
             </p>
             <div className="refine-media">
-              <VideoSlot
-                file={stage.video}
-                label={`wall_stand after the ${stage.label.toLowerCase()} stage`}
-                aspect="16 / 9"
-                autoPlay
-                hoverControls
-                loopRange={stage.loop ?? null}
-                className="refine-video"
-              />
+              <div className="refine-clip">
+                <VideoSlot
+                  file={stage.video}
+                  label={`wall_stance after the ${stage.label.toLowerCase()} stage`}
+                  aspect="4 / 3"
+                  autoPlay
+                  hoverControls
+                  loopRange={stage.loop ?? null}
+                  className="refine-video"
+                />
+              </div>
             </div>
             <ul className="refine-changes">
               {stage.changes.map((change, changeIndex) => (
@@ -47,7 +49,7 @@ export default function RefinementSteps() {
               ))}
             </ul>
             <p className={`refine-outcome is-${stage.outcomeKind}`}>
-              <Prose text={stage.outcome} />
+              <strong>Agent finding:</strong> <Prose text={stage.outcome} />
             </p>
           </li>
         ))}
