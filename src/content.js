@@ -18,7 +18,7 @@ export const paper = {
   title: 'ELEVATE: Agentic Controller Acquisition from Task Failure for Quadrupedal Manipulation',
   // `publicOnly` links are hidden in the anonymous build.
   links: [
-    { label: 'arXiv', href: '#', iconClass: 'ai ai-arxiv', publicOnly: true },
+    { label: 'arXiv', href: 'https://arxiv.org/abs/2610.38388', iconClass: 'ai ai-arxiv', publicOnly: true },
     { label: 'PDF', href: '#', iconClass: 'fas fa-file-pdf' },
     { label: 'Code', href: '#', iconClass: 'fab fa-github', publicOnly: true },
     { label: 'Video', href: '#video', iconClass: 'fas fa-video' },
